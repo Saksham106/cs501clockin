@@ -4,6 +4,7 @@
             "outputFile": "com.example.cs501clockin.app-mergeDebugResources-58:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
+<<<<<<< Updated upstream
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/747392a5f025fc915c3bcbb39425d316/transformed/foundation-release/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
                         "startLines": "2,3",
@@ -39,6 +40,9 @@
                 },
                 {
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/6bec62bc7e03e31a99c0ddf4f99aff7a/transformed/material3-release/res/values-en-rXC/values-en-rXC.xml",
+=======
+                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/ba862951660583d0475164f64cb1e120/transformed/material3-release/res/values-en-rXC/values-en-rXC.xml",
+>>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -55,7 +59,45 @@
                     }
                 },
                 {
+<<<<<<< Updated upstream
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/a75a1a11f2159938b0f71dba67d2c18a/transformed/ui-release/res/values-en-rXC/values-en-rXC.xml",
+=======
+                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/daf4f6ba48cf87e57bf2604f99eed15e/transformed/core-1.13.1/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,251,456,657,858,1065,1270,1482",
+                        "endColumns": "195,204,200,200,206,204,211,203",
+                        "endOffsets": "246,451,652,853,1060,1265,1477,1681"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,81",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,301,506,707,908,1115,1320,16228",
+                        "endColumns": "195,204,200,200,206,204,211,203",
+                        "endOffsets": "296,501,702,903,1110,1315,1527,16427"
+                    }
+                },
+                {
+                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/f9513d434084b4716bdeb79b55c9566d/transformed/foundation-release/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,243",
+                        "endColumns": "187,186",
+                        "endOffsets": "238,425"
+                    },
+                    "to": {
+                        "startLines": "85,86",
+                        "startColumns": "4,4",
+                        "startOffsets": "17016,17204",
+                        "endColumns": "187,186",
+                        "endOffsets": "17199,17386"
+                    }
+                },
+                {
+                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/675e80c6c72831b3303852be171c8e23/transformed/ui-release/res/values-en-rXC/values-en-rXC.xml",
+>>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",

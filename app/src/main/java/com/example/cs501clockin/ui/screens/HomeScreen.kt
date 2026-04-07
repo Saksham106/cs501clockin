@@ -21,7 +21,6 @@ import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.ui.util.formatClockTime
-import com.example.cs501clockin.viewmodel.WeatherUiState
 
 @Composable
 fun HomeScreen(
@@ -34,7 +33,6 @@ fun HomeScreen(
     locationState: com.example.cs501clockin.viewmodel.LocationUiState? = null,
     onRequestLocationPermission: (() -> Unit)? = null,
     onRefreshLocation: (() -> Unit)? = null,
-    weatherState: WeatherUiState? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -145,7 +143,7 @@ fun HomeScreen(
                         }
 
                         is LocationResult.PermissionDenied -> {
-                            Text("Permission denied. Enable it to use weather + location features.")
+                            Text("Permission denied. Enable it to use location features.")
                             Button(
                                 onClick = { onRequestLocationPermission?.invoke() },
                                 enabled = onRequestLocationPermission != null,
@@ -171,30 +169,6 @@ fun HomeScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text(if (locationState.isLoading) "Refreshing..." else "Refresh location") }
                         }
-                    }
-                }
-            }
-        }
-
-        if (weatherState != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text("Weather (Open‑Meteo)", style = MaterialTheme.typography.titleMedium)
-                    when {
-                        weatherState.isLoading -> Text("Loading…")
-                        weatherState.errorMessage != null -> Text("Error: ${weatherState.errorMessage}")
-                        weatherState.weather != null -> {
-                            Text("Temp: ${"%.1f".format(weatherState.weather.temperatureF)} °F")
-                        }
-                        else -> Text("Enable location to load weather.")
                     }
                 }
             }

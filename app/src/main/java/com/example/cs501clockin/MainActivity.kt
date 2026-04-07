@@ -42,9 +42,6 @@ import com.example.cs501clockin.viewmodel.HomeViewModel
 import com.example.cs501clockin.viewmodel.HomeViewModelFactory
 import com.example.cs501clockin.viewmodel.LocationViewModel
 import com.example.cs501clockin.viewmodel.LocationViewModelFactory
-import com.example.cs501clockin.viewmodel.WeatherViewModel
-import com.example.cs501clockin.viewmodel.WeatherViewModelFactory
-import com.example.cs501clockin.location.LocationResult
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,24 +83,9 @@ private fun ClockInRoot() {
     )
     val sessions by historyViewModel.sessions.collectAsStateWithLifecycle()
 
-    val weatherViewModel: WeatherViewModel = viewModel(
-        factory = WeatherViewModelFactory(app.weatherRepository)
-    )
-    val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
-
     LaunchedEffect(Unit) {
         if (app.locationRepository.hasFineLocationPermission()) {
             locationViewModel.refresh()
-        }
-    }
-
-    LaunchedEffect(locationUiState.result) {
-        val result = locationUiState.result
-        if (result is LocationResult.Success) {
-            weatherViewModel.refresh(
-                latitude = result.latLng.latitude,
-                longitude = result.latLng.longitude
-            )
         }
     }
 
@@ -154,8 +136,7 @@ private fun ClockInRoot() {
                     onRequestLocationPermission = {
                         requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                     },
-                    onRefreshLocation = { locationViewModel.refresh() },
-                    weatherState = weatherUiState
+                    onRefreshLocation = { locationViewModel.refresh() }
                 )
             }
 
