@@ -9,6 +9,11 @@ data class Session(
     val edited: Boolean = false
 )
 
+object SessionTags {
+    const val IDLE = "Idle"
+    val defaults: List<String> = listOf(IDLE, "Study", "Class", "Gym", "Work", "Errands")
+}
+
 val Session.isActive: Boolean
     get() = endTimeMillis == null
 

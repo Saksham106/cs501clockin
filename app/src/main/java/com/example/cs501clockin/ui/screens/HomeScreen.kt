@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.Session
+import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.ui.util.formatClockTime
 import com.example.cs501clockin.viewmodel.WeatherUiState
 
@@ -82,12 +83,12 @@ fun HomeScreen(
 
         Button(
             onClick = onStart,
-            enabled = selectedTag != "Idle" && activeSession == null,
+            enabled = selectedTag != SessionTags.IDLE && activeSession == null,
             modifier = Modifier.fillMaxWidth()
         ) {
             val text = when {
                 activeSession != null -> "Session Running"
-                selectedTag == "Idle" -> "Select a task tag"
+                selectedTag == SessionTags.IDLE -> "Select a task tag"
                 else -> "Start $selectedTag Session"
             }
             Text(text)
@@ -113,7 +114,7 @@ fun HomeScreen(
             }
         }
 
-        if (activeSession == null && selectedTag == "Idle") {
+        if (activeSession == null && selectedTag == SessionTags.IDLE) {
             Text(
                 text = "Status: Idle",
                 style = MaterialTheme.typography.bodyMedium,

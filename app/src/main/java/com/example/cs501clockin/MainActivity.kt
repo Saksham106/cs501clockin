@@ -77,7 +77,9 @@ private fun ClockInRoot() {
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) locationViewModel.refresh() else locationViewModel.refresh()
+        if (granted) {
+            locationViewModel.refresh()
+        }
     }
     val historyViewModel: HistoryViewModel = viewModel(
         factory = HistoryViewModelFactory(app.sessionRepository)
@@ -88,6 +90,12 @@ private fun ClockInRoot() {
         factory = WeatherViewModelFactory(app.weatherRepository)
     )
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        if (app.locationRepository.hasFineLocationPermission()) {
+            locationViewModel.refresh()
+        }
+    }
 
     LaunchedEffect(locationUiState.result) {
         val result = locationUiState.result

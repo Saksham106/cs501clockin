@@ -1,5 +1,6 @@
 package com.example.cs501clockin.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -19,6 +20,10 @@ data class WeatherUiState(
 class WeatherViewModel(
     private val repository: WeatherRepository
 ) : ViewModel() {
+    private companion object {
+        const val TAG = "WeatherViewModel"
+    }
+
     private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
@@ -28,10 +33,11 @@ class WeatherViewModel(
             try {
                 val now = repository.getCurrentWeather(latitude, longitude)
                 _uiState.value = WeatherUiState(isLoading = false, weather = now)
-            } catch (t: Throwable) {
+            } catch (e: Exception) {
+                Log.e(TAG, "Weather refresh failed", e)
                 _uiState.value = WeatherUiState(
                     isLoading = false,
-                    errorMessage = t.message ?: "Weather request failed"
+                    errorMessage = e.message ?: "Weather request failed"
                 )
             }
         }

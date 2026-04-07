@@ -1,5 +1,6 @@
 package com.example.cs501clockin.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,16 +15,26 @@ class EditSessionViewModel(
     private val sessionId: Long,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
+    private companion object {
+        const val TAG = "EditSessionViewModel"
+    }
+
     val session: StateFlow<Session?> =
         sessionRepository.observeSession(sessionId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun save(updated: Session) {
-        viewModelScope.launch { sessionRepository.upsert(updated) }
+        viewModelScope.launch {
+            runCatching { sessionRepository.upsert(updated) }
+                .onFailure { error -> Log.e(TAG, "Failed to save session", error) }
+        }
     }
 
     fun delete() {
-        viewModelScope.launch { sessionRepository.deleteById(sessionId) }
+        viewModelScope.launch {
+            runCatching { sessionRepository.deleteById(sessionId) }
+                .onFailure { error -> Log.e(TAG, "Failed to delete session", error) }
+        }
     }
 }
 

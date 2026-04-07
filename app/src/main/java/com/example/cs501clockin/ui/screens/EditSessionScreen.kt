@@ -109,8 +109,8 @@ fun EditSessionScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (timeError != null) {
-            Text(timeError!!, color = MaterialTheme.colorScheme.error)
+        timeError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
 
         Row(

@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.Priority
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -36,14 +38,37 @@ class LocationRepository(
         return suspendCancellableCoroutine { cont ->
             client.lastLocation
                 .addOnSuccessListener { loc ->
-                    if (loc == null) {
-                        cont.resume(LocationResult.Error("No last known location available"))
-                    } else {
+                    if (loc != null) {
                         cont.resume(
                             LocationResult.Success(
                                 LatLng(latitude = loc.latitude, longitude = loc.longitude)
                             )
                         )
+                    } else {
+                        val tokenSource = CancellationTokenSource()
+                        cont.invokeOnCancellation { tokenSource.cancel() }
+
+                        client.getCurrentLocation(
+                            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                            tokenSource.token
+                        )
+                            .addOnSuccessListener { current ->
+                                if (current == null) {
+                                    cont.resume(LocationResult.Error("Unable to get current location"))
+                                } else {
+                                    cont.resume(
+                                        LocationResult.Success(
+                                            LatLng(
+                                                latitude = current.latitude,
+                                                longitude = current.longitude
+                                            )
+                                        )
+                                    )
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                cont.resume(LocationResult.Error(e.message ?: "Location failure"))
+                            }
                     }
                 }
                 .addOnFailureListener { e ->
