@@ -2,7 +2,50 @@
 
 ## Project Overview
 
-This repository contains our CS501 Clock In Android app project.
+**ClockIn** is a mobile-first time tracking app for students and young professionals. It helps users record **what they actually did** during the day, not just what they planned to do. The main value is improving **time awareness** and helping users compare **intention vs. reality**.
+
+- **Mobile-first** — designed for phone use as the primary experience.
+- **Persistent local data** — supports storing entries and settings on device (e.g., Room, DataStore).
+- **Location / GPS** — can tie time entries to places when we add that feature.
+- **Notifications & background behavior** — can remind users to log or follow up on entries.
+- **Modern Android stack** — can be built with **Jetpack Compose**, **ViewModel**, **Navigation**, and **Room** / **DataStore** as appropriate.
+
+This repository contains our CS501 Clock In Android implementation of ClockIn.
+
+## User flow
+
+The app uses a **bottom navigation bar** with four destinations: **Home**, **History**, **Dashboard**, and **Settings**. **Edit session** opens as a separate screen when the user picks a past session from History.
+
+### Primary loop (recording what you did)
+
+1. Open the app — lands on **Home** (Quick Start).
+2. **Choose an activity tag** (e.g., study, work) that best describes what you are *actually* doing.
+3. Tap **Start** to begin a timed session for that tag.
+4. When you switch tasks or finish, tap **End** to close the session. The entry is **saved locally** with start/end times and metadata.
+5. Repeat through the day to build an honest log of real activity (not just plans).
+
+On **Home**, users can also **grant location** (optional) and see **context** such as refreshed location and weather when enabled—supporting awareness of *where* time was spent as the product evolves.
+
+### Reviewing and comparing intention vs. reality
+
+6. **History** — scroll the list of saved sessions. **Tap a session** to open **Edit session**, where you can update details, **save** changes, or **delete** the entry, then return to History.
+7. **Dashboard** — see **today’s totals by activity tag** (excluding idle) to compare how time was actually spent.
+8. **Settings** — reserved for preferences (e.g., DataStore-backed options); currently an MVP placeholder in code.
+
+### Navigation map
+
+```mermaid
+flowchart LR
+  subgraph tabs [Bottom navigation]
+    H[Home]
+    Y[History]
+    D[Dashboard]
+    S[Settings]
+  end
+  H --> |Start / End session| H
+  Y --> |Tap session| E[Edit session]
+  E --> |Save or Delete| Y
+```
 
 ## AI Disclosure
 
