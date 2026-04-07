@@ -4,7 +4,7 @@
             "outputFile": "com.example.cs501clockin.app-mergeDebugResources-58:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Sadid Ethun\\.gradle\\caches\\9.1.0\\transforms\\6bec62bc7e03e31a99c0ddf4f99aff7a\\workspace\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/6bec62bc7e03e31a99c0ddf4f99aff7a/transformed/material3-release/res/values-v30/values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
