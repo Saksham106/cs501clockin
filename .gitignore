@@ -19,3 +19,7 @@ local.properties
 .DS_Store
 Thumbs.db
 
+### Project docs (local)
+.description.txt
+.requirements.txt
+
