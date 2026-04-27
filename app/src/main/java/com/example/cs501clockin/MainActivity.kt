@@ -60,6 +60,14 @@ private fun ClockInRoot() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Routes.Home
+    val topBarTitle = when {
+        currentRoute.startsWith(Routes.EditSessionBase) -> "Edit Session"
+        currentRoute == Routes.Home -> "ClockIn"
+        currentRoute == Routes.History -> "History"
+        currentRoute == Routes.Dashboard -> "Dashboard"
+        currentRoute == Routes.Settings -> "Settings"
+        else -> "ClockIn"
+    }
     val context = LocalContext.current
     val app = context.applicationContext as ClockInApp
     val snackbarHostState = remember { SnackbarHostState() }
@@ -90,7 +98,7 @@ private fun ClockInRoot() {
     }
 
     Scaffold(
-        topBar = { ClockInTopBar() },
+        topBar = { ClockInTopBar(title = topBarTitle) },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             NavigationBar {
@@ -136,7 +144,8 @@ private fun ClockInRoot() {
                     onRequestLocationPermission = {
                         requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                     },
-                    onRefreshLocation = { locationViewModel.refresh() }
+                    onRefreshLocation = { locationViewModel.refresh() },
+                    onOpenDashboard = { navController.navigate(Routes.Dashboard) }
                 )
             }
 
@@ -150,7 +159,10 @@ private fun ClockInRoot() {
             }
 
             composable(Routes.Dashboard) {
-                DashboardScreen(sessions = sessions)
+                DashboardScreen(
+                    sessions = sessions,
+                    onManageTags = { navController.navigate(Routes.Settings) }
+                )
             }
 
             composable(Routes.Settings) {

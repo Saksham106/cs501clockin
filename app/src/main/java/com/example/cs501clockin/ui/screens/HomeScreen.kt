@@ -2,37 +2,48 @@ package com.example.cs501clockin.ui.screens
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
+import com.example.cs501clockin.model.durationMillis
+import com.example.cs501clockin.ui.util.TagPalette
 import com.example.cs501clockin.ui.util.formatClockTime
+import com.example.cs501clockin.ui.util.formatDurationMillis
 
 @Composable
 fun HomeScreen(
     tags: List<String>,
     selectedTag: String,
-    activeSession: Session?,
+    activeSession: Session,
     onTagSelected: (String) -> Unit,
     onStart: () -> Unit,
     onEnd: () -> Unit,
     locationState: com.example.cs501clockin.viewmodel.LocationUiState? = null,
     onRequestLocationPermission: (() -> Unit)? = null,
     onRefreshLocation: (() -> Unit)? = null,
+    onOpenDashboard: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -50,74 +61,107 @@ fun HomeScreen(
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Quick Start", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "Tap a tag and start tracking what you are actually doing.",
-                    style = MaterialTheme.typography.bodyMedium
+                    "Switch Tag",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            tags.take(3).forEach { tag ->
-                FilterChip(
-                    selected = tag == selectedTag,
-                    onClick = { onTagSelected(tag) },
-                    label = { Text(tag) }
-                )
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            tags.drop(3).forEach { tag ->
-                FilterChip(
-                    selected = tag == selectedTag,
-                    onClick = { onTagSelected(tag) },
-                    label = { Text(tag) }
-                )
-            }
-        }
-
-        Button(
-            onClick = onStart,
-            enabled = selectedTag != SessionTags.IDLE && activeSession == null,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            val text = when {
-                activeSession != null -> "Session Running"
-                selectedTag == SessionTags.IDLE -> "Select a task tag"
-                else -> "Start $selectedTag Session"
-            }
-            Text(text)
-        }
-
-        if (activeSession != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Active: ${activeSession.tag}")
-                    Text("Started: ${formatClockTime(activeSession.startTimeMillis)}")
-                    Button(onClick = onEnd, modifier = Modifier.fillMaxWidth()) {
-                        Text("End Session")
+                tags.chunked(2).forEach { rowTags ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        rowTags.forEach { tag ->
+                            val accent = TagPalette.colorFor(tag)
+                            val selected = tag == selectedTag
+                            Button(
+                                onClick = { onTagSelected(tag) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selected) {
+                                        accent.copy(alpha = 0.34f)
+                                    } else {
+                                        accent.copy(alpha = 0.16f)
+                                    },
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Text(tag)
+                            }
+                        }
+                        if (rowTags.size == 1) {
+                            Box(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
         }
 
-        if (activeSession == null && selectedTag == SessionTags.IDLE) {
-            Text(
-                text = "Status: Idle",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
+        Button(
+            onClick = onStart,
+            enabled = selectedTag != activeSession.tag,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val text = if (selectedTag == activeSession.tag) {
+                "Currently on ${activeSession.tag}"
+            } else {
+                "Switch to $selectedTag"
+            }
+            Text(text)
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
             )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("Active: ${activeSession.tag}", style = MaterialTheme.typography.titleMedium)
+                Text("Started: ${formatClockTime(activeSession.startTimeMillis)}")
+                Text("Elapsed: ${formatDurationMillis(activeSession.durationMillis())}")
+                HorizontalDivider()
+                Button(
+                    onClick = onEnd,
+                    enabled = activeSession.tag != SessionTags.IDLE,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (activeSession.tag == SessionTags.IDLE) "Already Idle" else "Switch to Idle")
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = { onOpenDashboard?.invoke() },
+                enabled = onOpenDashboard != null,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Text("Open Dashboard")
+            }
+            Button(
+                onClick = { onTagSelected(SessionTags.IDLE) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Text("Switch To Idle")
+            }
         }
 
         if (locationState != null) {
@@ -127,8 +171,16 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             ) {
+                val locationBrush = Brush.horizontalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .background(locationBrush)
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text("Location", style = MaterialTheme.typography.titleMedium)

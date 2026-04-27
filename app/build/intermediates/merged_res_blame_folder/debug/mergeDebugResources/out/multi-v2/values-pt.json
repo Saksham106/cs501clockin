@@ -4,9 +4,6 @@
             "outputFile": "com.example.cs501clockin.app-mergeDebugResources-58:/values-pt/values-pt.xml",
             "map": [
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/6bec62bc7e03e31a99c0ddf4f99aff7a/transformed/material3-release/res/values-pt/values-pt.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/daf4f6ba48cf87e57bf2604f99eed15e/transformed/core-1.13.1/res/values-pt/values-pt.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -25,7 +22,6 @@
                 },
                 {
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/f9513d434084b4716bdeb79b55c9566d/transformed/foundation-release/res/values-pt/values-pt.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -42,45 +38,7 @@
                     }
                 },
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/9a04bdfddda221808099a6841f055732/transformed/core-1.13.1/res/values-pt/values-pt.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,152,254,353,453,560,670,790",
-                        "endColumns": "96,101,98,99,106,109,119,100",
-                        "endOffsets": "147,249,348,448,555,665,785,886"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,81",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,202,304,403,503,610,720,8398",
-                        "endColumns": "96,101,98,99,106,109,119,100",
-                        "endOffsets": "197,299,398,498,605,715,835,8494"
-                    }
-                },
-                {
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/747392a5f025fc915c3bcbb39425d316/transformed/foundation-release/res/values-pt/values-pt.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,138",
-                        "endColumns": "82,84",
-                        "endOffsets": "133,218"
-                    },
-                    "to": {
-                        "startLines": "85,86",
-                        "startColumns": "4,4",
-                        "startOffsets": "8755,8838",
-                        "endColumns": "82,84",
-                        "endOffsets": "8833,8918"
-                    }
-                },
-                {
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/a75a1a11f2159938b0f71dba67d2c18a/transformed/ui-release/res/values-pt/values-pt.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/675e80c6c72831b3303852be171c8e23/transformed/ui-release/res/values-pt/values-pt.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",

@@ -10,8 +10,25 @@ data class Session(
 )
 
 object SessionTags {
-    const val IDLE = "Idle"
-    val defaults: List<String> = listOf(IDLE, "Study", "Class", "Gym", "Work", "Errands")
+    const val SCHOOL = "School"
+    const val WORK = "Work"
+    const val TRAINING = "Training"
+    const val FOOD = "Food"
+    const val PERSONAL_CARE = "Personal Care"
+    const val RECOVERY_MIND = "Recovery / Mind"
+    const val SOCIAL_ADMIN = "Social / Admin"
+    const val IDLE = "Idle / Off"
+
+    val defaults: List<String> = listOf(
+        SCHOOL,
+        WORK,
+        TRAINING,
+        FOOD,
+        PERSONAL_CARE,
+        RECOVERY_MIND,
+        SOCIAL_ADMIN,
+        IDLE
+    )
 }
 
 val Session.isActive: Boolean

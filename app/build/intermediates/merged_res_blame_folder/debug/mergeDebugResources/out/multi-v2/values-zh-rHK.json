@@ -4,9 +4,6 @@
             "outputFile": "com.example.cs501clockin.app-mergeDebugResources-58:/values-zh-rHK/values-zh-rHK.xml",
             "map": [
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/45666469d38955a0fef4215637ff9043/transformed/play-services-base-18.5.0/res/values-zh-rHK/values.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/daf4f6ba48cf87e57bf2604f99eed15e/transformed/core-1.13.1/res/values-zh-rHK/values-zh-rHK.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -25,7 +22,6 @@
                 },
                 {
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/078c2f0810e13af7dce8d8effc52be4d/transformed/play-services-base-18.5.0/res/values-zh-rHK/values.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -42,9 +38,6 @@
                     }
                 },
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/af90f3211047d99a7a81877b3b8ca98d/transformed/play-services-basement-18.4.0/res/values-zh-rHK/values.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/675e80c6c72831b3303852be171c8e23/transformed/ui-release/res/values-zh-rHK/values-zh-rHK.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
@@ -63,7 +56,6 @@
                 },
                 {
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/3f58ab8039fd00db1cfd0b3b1bc6451b/transformed/play-services-basement-18.4.0/res/values-zh-rHK/values.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "4",
                         "startColumns": "0",
@@ -80,11 +72,7 @@
                     }
                 },
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/747392a5f025fc915c3bcbb39425d316/transformed/foundation-release/res/values-zh-rHK/values-zh-rHK.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/f9513d434084b4716bdeb79b55c9566d/transformed/foundation-release/res/values-zh-rHK/values-zh-rHK.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -101,45 +89,7 @@
                     }
                 },
                 {
-<<<<<<< Updated upstream
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/9a04bdfddda221808099a6841f055732/transformed/core-1.13.1/res/values-zh-rHK/values-zh-rHK.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,147,246,340,434,527,620,716",
-                        "endColumns": "91,98,93,93,92,92,95,100",
-                        "endOffsets": "142,241,335,429,522,615,711,812"
-                    },
-                    "to": {
-                        "startLines": "2,3,4,5,6,7,8,99",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,197,296,390,484,577,670,9250",
-                        "endColumns": "91,98,93,93,92,92,95,100",
-                        "endOffsets": "192,291,385,479,572,665,761,9346"
-                    }
-                },
-                {
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/a75a1a11f2159938b0f71dba67d2c18a/transformed/ui-release/res/values-zh-rHK/values-zh-rHK.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,181,255,343,434,512,586,663,741,815,888,963,1030,1103,1173,1242,1317,1382",
-                        "endColumns": "75,73,87,90,77,73,76,77,73,72,74,66,72,69,68,74,64,115",
-                        "endOffsets": "176,250,338,429,507,581,658,736,810,883,958,1025,1098,1168,1237,1312,1377,1493"
-                    },
-                    "to": {
-                        "startLines": "9,10,29,30,31,32,33,91,92,93,94,95,96,97,98,100,101,102",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "766,842,2742,2830,2921,2999,3073,8671,8749,8823,8896,8971,9038,9111,9181,9351,9426,9491",
-                        "endColumns": "75,73,87,90,77,73,76,77,73,72,74,66,72,69,68,74,64,115",
-                        "endOffsets": "837,911,2825,2916,2994,3068,3145,8744,8818,8891,8966,9033,9106,9176,9245,9421,9486,9602"
-                    }
-                },
-                {
-                    "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/6bec62bc7e03e31a99c0ddf4f99aff7a/transformed/material3-release/res/values-zh-rHK/values-zh-rHK.xml",
-=======
                     "source": "/Users/sakshamgoel/.gradle/caches/9.1.0/transforms/ba862951660583d0475164f64cb1e120/transformed/material3-release/res/values-zh-rHK/values-zh-rHK.xml",
->>>>>>> Stashed changes
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
