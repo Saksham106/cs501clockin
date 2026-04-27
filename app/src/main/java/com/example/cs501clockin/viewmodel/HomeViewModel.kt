@@ -16,7 +16,11 @@ import kotlinx.coroutines.flow.update
 data class HomeUiState(
     val tags: List<String> = SessionTags.defaults,
     val selectedTag: String = SessionTags.IDLE,
-    val activeSession: Session? = null
+    val activeSession: Session = Session(
+        id = System.currentTimeMillis(),
+        tag = SessionTags.IDLE,
+        startTimeMillis = System.currentTimeMillis()
+    )
 )
 
 class HomeViewModel(
@@ -35,23 +39,50 @@ class HomeViewModel(
 
     fun startSession() {
         val current = _uiState.value
-        if (current.selectedTag == SessionTags.IDLE) return
-        if (current.activeSession != null) return
-        val session = Session(
-                id = System.currentTimeMillis(),
-                tag = current.selectedTag,
-                startTimeMillis = System.currentTimeMillis()
-            )
-        _uiState.update { it.copy(activeSession = session) }
+        switchToTag(current.selectedTag)
     }
 
     fun endSession(): Session? {
         val current = _uiState.value
-        val active = current.activeSession ?: return null
+        if (current.activeSession.tag == SessionTags.IDLE) return null
+
+        val now = System.currentTimeMillis()
+        val active = current.activeSession
         val completed = active.copy(endTimeMillis = System.currentTimeMillis())
+        val idleSession = Session(
+            id = now + 1,
+            tag = SessionTags.IDLE,
+            startTimeMillis = now
+        )
+
         _uiState.update {
-            it.copy(activeSession = null, selectedTag = SessionTags.IDLE)
+            it.copy(activeSession = idleSession, selectedTag = SessionTags.IDLE)
         }
+
+        persistCompleted(completed)
+        return completed
+    }
+
+    private fun switchToTag(nextTag: String) {
+        val current = _uiState.value
+        if (nextTag == current.activeSession.tag) return
+
+        val now = System.currentTimeMillis()
+        val completed = current.activeSession.copy(endTimeMillis = now)
+        val nextSession = Session(
+            id = now + 1,
+            tag = nextTag,
+            startTimeMillis = now
+        )
+
+        _uiState.update {
+            it.copy(activeSession = nextSession, selectedTag = nextTag)
+        }
+
+        persistCompleted(completed)
+    }
+
+    private fun persistCompleted(completed: Session) {
         viewModelScope.launch {
             runCatching {
                 sessionRepository.upsert(completed)
@@ -59,7 +90,6 @@ class HomeViewModel(
                 Log.e(TAG, "Failed to persist completed session", error)
             }
         }
-        return completed
     }
 }
 
