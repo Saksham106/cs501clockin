@@ -10,6 +10,9 @@ import java.util.Properties
 android {
     namespace = "com.example.cs501clockin"
     compileSdk = 36
+    // Google Play Services Maps Dynamite can reference Apache HTTP classes on some devices.
+    // This adds the optional legacy library so those classes exist at runtime.
+    useLibrary("org.apache.http.legacy")
 
     defaultConfig {
         applicationId = "com.example.cs501clockin"
