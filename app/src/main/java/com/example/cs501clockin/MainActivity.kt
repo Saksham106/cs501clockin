@@ -1,10 +1,13 @@
 package com.example.cs501clockin
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
@@ -17,7 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -34,14 +41,19 @@ import com.example.cs501clockin.ui.screens.HistoryScreen
 import com.example.cs501clockin.ui.screens.HomeScreen
 import com.example.cs501clockin.ui.screens.SettingsScreen
 import com.example.cs501clockin.ui.theme.Cs501clockinTheme
-import com.example.cs501clockin.viewmodel.HistoryViewModel
-import com.example.cs501clockin.viewmodel.HistoryViewModelFactory
 import com.example.cs501clockin.viewmodel.EditSessionViewModel
 import com.example.cs501clockin.viewmodel.EditSessionViewModelFactory
+import com.example.cs501clockin.viewmodel.HistoryViewModel
+import com.example.cs501clockin.viewmodel.HistoryViewModelFactory
 import com.example.cs501clockin.viewmodel.HomeViewModel
 import com.example.cs501clockin.viewmodel.HomeViewModelFactory
 import com.example.cs501clockin.viewmodel.LocationViewModel
 import com.example.cs501clockin.viewmodel.LocationViewModelFactory
+import com.example.cs501clockin.viewmodel.SettingsViewModel
+import com.example.cs501clockin.viewmodel.SettingsViewModelFactory
+import com.example.cs501clockin.viewmodel.SuggestionsViewModel
+import com.example.cs501clockin.viewmodel.SuggestionsViewModelFactory
+import com.example.cs501clockin.notification.LocationSuggestionNotifier
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,31 +83,73 @@ private fun ClockInRoot() {
     val context = LocalContext.current
     val app = context.applicationContext as ClockInApp
     val snackbarHostState = remember { SnackbarHostState() }
+
     val homeViewModel: HomeViewModel = viewModel(
-        factory = HomeViewModelFactory(app.sessionRepository)
+        factory = HomeViewModelFactory(app.activeSessionStore, app.userPreferencesRepository)
     )
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+
     val locationViewModel: LocationViewModel = viewModel(
         factory = LocationViewModelFactory(app.locationRepository)
     )
     val locationUiState by locationViewModel.uiState.collectAsStateWithLifecycle()
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
+
+    val suggestionsViewModel: SuggestionsViewModel = viewModel(
+        factory = SuggestionsViewModelFactory(
+            app.savedLocationRepository,
+            app.userPreferencesRepository,
+            app.activeSessionStore,
+            locationViewModel.uiState
+        )
+    )
+    val suggestionsUiState by suggestionsViewModel.uiState.collectAsStateWithLifecycle()
+    var lastNotifiedSuggestionId by remember { mutableLongStateOf(-1L) }
+
+    val requestLocationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             locationViewModel.refresh()
         }
     }
-    val historyViewModel: HistoryViewModel = viewModel(
-        factory = HistoryViewModelFactory(app.sessionRepository)
-    )
-    val sessions by historyViewModel.sessions.collectAsStateWithLifecycle()
+
+    val postNotificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { /* optional: could snackbar if denied */ }
 
     LaunchedEffect(Unit) {
         if (app.locationRepository.hasFineLocationPermission()) {
             locationViewModel.refresh()
         }
     }
+
+    LaunchedEffect(suggestionsUiState.suggestion) {
+        val s = suggestionsUiState.suggestion ?: return@LaunchedEffect
+        if (s.savedLocationId == lastNotifiedSuggestionId) return@LaunchedEffect
+        lastNotifiedSuggestionId = s.savedLocationId
+        LocationSuggestionNotifier.notify(
+            context = context,
+            label = s.label,
+            suggestedTag = s.suggestedTag
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                postNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    val historyViewModel: HistoryViewModel = viewModel(
+        factory = HistoryViewModelFactory(app.sessionRepository)
+    )
+    val sessions by historyViewModel.sessions.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { ClockInTopBar(title = topBarTitle) },
@@ -140,12 +194,12 @@ private fun ClockInRoot() {
                     onTagSelected = homeViewModel::onTagSelected,
                     onStart = homeViewModel::startSession,
                     onEnd = { homeViewModel.endSession() },
-                    locationState = locationUiState,
-                    onRequestLocationPermission = {
-                        requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    locationSuggestion = suggestionsUiState.suggestion,
+                    onAcceptLocationSuggestion = { tag ->
+                        homeViewModel.onTagSelected(tag)
+                        homeViewModel.startSession()
                     },
-                    onRefreshLocation = { locationViewModel.refresh() },
-                    onOpenDashboard = { navController.navigate(Routes.Dashboard) }
+                    onDismissLocationSuggestion = { suggestionsViewModel.dismissCurrentSuggestion() }
                 )
             }
 
@@ -160,13 +214,38 @@ private fun ClockInRoot() {
 
             composable(Routes.Dashboard) {
                 DashboardScreen(
-                    sessions = sessions,
-                    onManageTags = { navController.navigate(Routes.Settings) }
+                    sessions = sessions
                 )
             }
 
             composable(Routes.Settings) {
-                SettingsScreen()
+                val settingsViewModel: SettingsViewModel = viewModel(
+                    factory = SettingsViewModelFactory(
+                        app.userPreferencesRepository,
+                        app.savedLocationRepository,
+                        app.locationRepository
+                    )
+                )
+                val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+                LaunchedEffect(Unit) {
+                    settingsViewModel.events.collect { message ->
+                        snackbarHostState.showSnackbar(message)
+                    }
+                }
+
+                SettingsScreen(
+                    state = settingsState,
+                    onNotificationsChanged = settingsViewModel::setNotificationsEnabled,
+                    onLocationSuggestionsChanged = settingsViewModel::setLocationSuggestionsEnabled,
+                    onNotificationQuickTagToggle = settingsViewModel::toggleNotificationQuickTag,
+                    onHomeVisibleTagToggle = settingsViewModel::toggleHomeVisibleTag,
+                    onAddCustomTag = settingsViewModel::addCustomTag,
+                    onDeleteCustomTag = settingsViewModel::deleteCustomTag,
+                    onAddSavedLocation = settingsViewModel::addSavedLocationFromCurrent,
+                    onAddSavedLocationManual = settingsViewModel::addSavedLocationManual,
+                    onDeleteSavedLocation = settingsViewModel::deleteSavedLocation
+                )
             }
 
             composable(

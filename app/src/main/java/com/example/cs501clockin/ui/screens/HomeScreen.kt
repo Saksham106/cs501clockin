@@ -21,16 +21,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.model.durationMillis
 import com.example.cs501clockin.ui.util.TagPalette
 import com.example.cs501clockin.ui.util.formatClockTime
 import com.example.cs501clockin.ui.util.formatDurationMillis
+import com.example.cs501clockin.viewmodel.LocationSuggestion
 
 @Composable
 fun HomeScreen(
@@ -40,10 +39,9 @@ fun HomeScreen(
     onTagSelected: (String) -> Unit,
     onStart: () -> Unit,
     onEnd: () -> Unit,
-    locationState: com.example.cs501clockin.viewmodel.LocationUiState? = null,
-    onRequestLocationPermission: (() -> Unit)? = null,
-    onRefreshLocation: (() -> Unit)? = null,
-    onOpenDashboard: (() -> Unit)? = null,
+    locationSuggestion: LocationSuggestion? = null,
+    onAcceptLocationSuggestion: ((String) -> Unit)? = null,
+    onDismissLocationSuggestion: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -53,6 +51,50 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (locationSuggestion != null && onAcceptLocationSuggestion != null && onDismissLocationSuggestion != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "Near ${locationSuggestion.label}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Start a ${locationSuggestion.suggestedTag} session?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onAcceptLocationSuggestion(locationSuggestion.suggestedTag) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Accept")
+                        }
+                        Button(
+                            onClick = onDismissLocationSuggestion,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Text("Dismiss")
+                        }
+                    }
+                }
+            }
+        }
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -135,93 +177,6 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(if (activeSession.tag == SessionTags.IDLE) "Already Idle" else "Switch to Idle")
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = { onOpenDashboard?.invoke() },
-                enabled = onOpenDashboard != null,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text("Open Dashboard")
-            }
-            Button(
-                onClick = { onTagSelected(SessionTags.IDLE) },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text("Switch To Idle")
-            }
-        }
-
-        if (locationState != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                val locationBrush = Brush.horizontalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.secondaryContainer,
-                        MaterialTheme.colorScheme.surfaceVariant
-                    )
-                )
-                Column(
-                    modifier = Modifier
-                        .background(locationBrush)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text("Location", style = MaterialTheme.typography.titleMedium)
-                    when (val result = locationState.result) {
-                        null -> {
-                            Text("Not requested yet.")
-                            Button(
-                                onClick = { onRequestLocationPermission?.invoke() },
-                                enabled = onRequestLocationPermission != null,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text("Enable location") }
-                        }
-
-                        is LocationResult.PermissionDenied -> {
-                            Text("Permission denied. Enable it to use location features.")
-                            Button(
-                                onClick = { onRequestLocationPermission?.invoke() },
-                                enabled = onRequestLocationPermission != null,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text("Grant permission") }
-                        }
-
-                        is LocationResult.Error -> {
-                            Text("Error: ${result.message}")
-                            Button(
-                                onClick = { onRefreshLocation?.invoke() },
-                                enabled = onRefreshLocation != null,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text("Retry") }
-                        }
-
-                        is LocationResult.Success -> {
-                            Text("Lat: ${"%.5f".format(result.latLng.latitude)}")
-                            Text("Lon: ${"%.5f".format(result.latLng.longitude)}")
-                            Button(
-                                onClick = { onRefreshLocation?.invoke() },
-                                enabled = onRefreshLocation != null && !locationState.isLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text(if (locationState.isLoading) "Refreshing..." else "Refresh location") }
-                        }
-                    }
                 }
             }
         }

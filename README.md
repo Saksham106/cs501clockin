@@ -16,6 +16,17 @@ This repository contains our CS501 Clock In Android implementation of ClockIn.
 
 The app uses a **bottom navigation bar** with four destinations: **Home**, **History**, **Dashboard**, and **Settings**. **Edit session** opens as a separate screen when the user picks a past session from History.
 
+## Setup (Google Maps API key)
+
+The Settings screen includes a **“Pick location on map”** feature using **Google Maps**. To run it, you must provide a Maps SDK for Android API key **locally** (it is **not** committed to this repo).
+
+- **Step 1**: Create (or edit) the file `local.properties` at the project root (same level as `settings.gradle.kts`).
+- **Step 2**: Add your key:
+
+```properties
+MAPS_API_KEY=YOUR_REAL_KEY_HERE
+```
+
 ### Primary loop (recording what you did)
 
 1. Open the app — lands on **Home** (Quick Start).

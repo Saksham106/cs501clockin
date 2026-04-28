@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -52,7 +51,6 @@ import java.util.Locale
 @Composable
 fun DashboardScreen(
     sessions: List<Session>,
-    onManageTags: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val startOfToday = rememberStartOfTodayMillis()
@@ -98,178 +96,161 @@ fun DashboardScreen(
         computeSevenDayStats(sessions, startOfToday)
     }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            "Dashboard",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            IconButton(onClick = { dayOffset -= 1 }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Previous day")
-            }
-            Surface(
-                tonalElevation = 2.dp,
-                shape = RoundedCornerShape(12.dp)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = if (dayOffset == 0) "Today" else formatDashboardDay(selectedDayStart),
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.titleMedium
+                IconButton(onClick = { dayOffset -= 1 }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Previous day")
+                }
+                Surface(
+                    tonalElevation = 2.dp,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (dayOffset == 0) "Today" else formatDashboardDay(selectedDayStart),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                IconButton(onClick = { if (dayOffset < 0) dayOffset += 1 }) {
+                    Icon(Icons.Default.ArrowForward, contentDescription = "Next day")
+                }
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                 )
-            }
-            IconButton(onClick = { if (dayOffset < 0) dayOffset += 1 }) {
-                Icon(Icons.Default.ArrowForward, contentDescription = "Next day")
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = { onManageTags?.invoke() },
-                enabled = onManageTags != null
             ) {
-                Text("Manage Tags")
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "Day Overview",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "  •  ${formatDayAndWeekday(selectedDayStart)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Total Tracked", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        formatDurationMillis(totalTracked),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                HorizontalDivider()
-
-                if (orderedTotals.isEmpty()) {
-                    Text("No sessions tracked for this day.")
-                } else {
-                    orderedTotals.forEach { (tag, duration) ->
-                        DashboardTagRow(tag = tag, duration = duration)
-                    }
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text("Timeline", style = MaterialTheme.typography.headlineSmall)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            "Longest segment (non-idle): ${formatDurationMillis(longestNonIdle)}",
+                            text = "Day Overview",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "  •  ${formatDayAndWeekday(selectedDayStart)}",
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-
-                if (timelineItems.isEmpty()) {
-                    Text("No timeline entries for this day.")
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.height(350.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        items(timelineItems, key = { it.id }) { session ->
-                            TimelineItem(session = session)
+                        Text("Total Tracked", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            formatDurationMillis(totalTracked),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    HorizontalDivider()
+
+                    if (orderedTotals.isEmpty()) {
+                        Text("No sessions tracked for this day.")
+                    } else {
+                        orderedTotals.forEach { (tag, duration) ->
+                            DashboardTagRow(tag = tag, duration = duration)
                         }
                     }
                 }
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)
+                )
             ) {
-                Text("Last 7 Days - Active Overview", style = MaterialTheme.typography.headlineSmall)
-                Text("Excludes today", color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    Text("Timeline", style = MaterialTheme.typography.headlineSmall)
                     Text(
-                        "Avg Active (tracked days - ${sevenDayStats.trackedDays}/7)",
-                        style = MaterialTheme.typography.titleLarge
+                        "Longest segment (non-idle): ${formatDurationMillis(longestNonIdle)}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(
-                        formatDurationMillis(sevenDayStats.averageActivePerTrackedDay),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+
+                    if (timelineItems.isEmpty()) {
+                        Text("No timeline entries for this day.")
+                    }
                 }
+            }
+        }
 
-                SegmentedActiveBar(
-                    totals = sevenDayStats.nonIdleTotals,
-                    totalNonIdle = sevenDayStats.totalNonIdle
+        items(timelineItems, key = { it.id }) { session ->
+            TimelineItem(session = session)
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
                 )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("Last 7 Days - Active Overview", style = MaterialTheme.typography.headlineSmall)
+                    Text("Excludes today", color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-                Text(
-                    "Total - ${formatDurationMillis(sevenDayStats.totalAllTags)}",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Avg Active (tracked days - ${sevenDayStats.trackedDays}/7)",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            formatDurationMillis(sevenDayStats.averageActivePerTrackedDay),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
-                Text("Avg per tag (tracked days)", style = MaterialTheme.typography.titleLarge)
-                sevenDayStats.averageByTag.forEach { (tag, avgDuration) ->
-                    DashboardTagRow(tag = tag, duration = avgDuration)
+                    SegmentedActiveBar(
+                        totals = sevenDayStats.nonIdleTotals,
+                        totalNonIdle = sevenDayStats.totalNonIdle
+                    )
+
+                    Text(
+                        "Total - ${formatDurationMillis(sevenDayStats.totalAllTags)}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Text("Avg per tag (tracked days)", style = MaterialTheme.typography.titleLarge)
+                    sevenDayStats.averageByTag.forEach { (tag, avgDuration) ->
+                        DashboardTagRow(tag = tag, duration = avgDuration)
+                    }
                 }
             }
         }

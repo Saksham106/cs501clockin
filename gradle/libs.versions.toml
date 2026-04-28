@@ -4,7 +4,10 @@ kotlin = "2.0.21"
 room = "2.7.0"
 coroutines = "1.9.0"
 playServicesLocation = "21.3.0"
+playServicesMaps = "20.0.0"
+mapsCompose = "6.0.0"
 ksp = "2.0.21-1.0.27"
+datastore = "1.1.1"
 
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -45,6 +48,10 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+googlemaps-maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
