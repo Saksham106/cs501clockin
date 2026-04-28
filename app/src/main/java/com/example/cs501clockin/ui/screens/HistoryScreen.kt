@@ -30,8 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.durationMillis
+import com.example.cs501clockin.ui.util.TagPalette
 import com.example.cs501clockin.ui.util.formatClockTime
 import com.example.cs501clockin.ui.util.formatDurationMillis
 import java.text.SimpleDateFormat
@@ -77,6 +79,7 @@ fun HistoryScreen(
                 }
                 Surface(
                     tonalElevation = 2.dp,
+                    shadowElevation = 0.dp,
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
@@ -113,13 +116,20 @@ fun HistoryScreen(
             }
         } else {
             items(daySessions, key = { it.id }) { session ->
+                val accent = TagPalette.colorFor(session.tag)
+                // Match the Home screen's pastel tag styling (tinted, not saturated).
+                val container = accent.copy(alpha = 0.16f)
+                val shape = RoundedCornerShape(16.dp)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSessionClick(session) },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+                        containerColor = container,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = shape,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     androidx.compose.foundation.layout.Column(
                         modifier = Modifier.padding(16.dp),

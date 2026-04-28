@@ -18,11 +18,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.model.durationMillis
@@ -44,6 +46,7 @@ fun HomeScreen(
     onDismissLocationSuggestion: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val darkTheme = isSystemInDarkTheme()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -56,7 +59,8 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -81,12 +85,9 @@ fun HomeScreen(
                         ) {
                             Text("Accept")
                         }
-                        Button(
+                        OutlinedButton(
                             onClick = onDismissLocationSuggestion,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                            modifier = Modifier.weight(1f)
                         ) {
                             Text("Dismiss")
                         }
@@ -99,7 +100,8 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -126,9 +128,9 @@ fun HomeScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (selected) {
-                                        accent.copy(alpha = 0.34f)
+                                        accent.copy(alpha = if (darkTheme) 0.58f else 0.34f)
                                     } else {
-                                        accent.copy(alpha = 0.16f)
+                                        accent.copy(alpha = if (darkTheme) 0.32f else 0.16f)
                                     },
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 )
@@ -147,7 +149,11 @@ fun HomeScreen(
         Button(
             onClick = onStart,
             enabled = selectedTag != activeSession.tag,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface
+            )
         ) {
             val text = if (selectedTag == activeSession.tag) {
                 "Currently on ${activeSession.tag}"
@@ -161,7 +167,8 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer
-            )
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

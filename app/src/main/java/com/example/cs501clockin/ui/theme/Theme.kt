@@ -12,19 +12,47 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = Plum90,
+    onPrimary = NightBackground,
+    primaryContainer = NightSurfaceVariant,
+    onPrimaryContainer = NightOnSurface,
     secondary = Slate90,
+    onSecondary = NightBackground,
+    secondaryContainer = NightSurfaceVariant,
+    onSecondaryContainer = NightOnSurface,
     tertiary = Rose90,
+    onTertiary = NightBackground,
+    tertiaryContainer = NightSurfaceVariant,
+    onTertiaryContainer = NightOnSurface,
     background = NightBackground,
+    onBackground = NightOnSurface,
     surface = NightSurface,
     surfaceVariant = NightSurfaceVariant,
     onSurface = NightOnSurface,
+    onSurfaceVariant = NightOnSurfaceVariant,
     outline = NightOutline
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Plum40,
+    onPrimary = androidx.compose.ui.graphics.Color.White,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnSurface,
     secondary = Slate40,
+    onSecondary = androidx.compose.ui.graphics.Color.White,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSurface,
     tertiary = Rose40
+    ,
+    onTertiary = androidx.compose.ui.graphics.Color.White,
+    tertiaryContainer = LightTertiaryContainer,
+    onTertiaryContainer = LightOnSurface,
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

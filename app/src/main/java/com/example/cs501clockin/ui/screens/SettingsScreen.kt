@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -17,8 +18,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -34,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.ui.components.MapPickerDialog
+import com.example.cs501clockin.ui.util.TagPalette
 import com.example.cs501clockin.viewmodel.SettingsUiState
 import com.google.android.gms.maps.model.LatLng
 
@@ -70,7 +74,8 @@ fun SettingsScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Notifications", style = MaterialTheme.typography.titleMedium)
@@ -107,12 +112,29 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             rowTags.forEach { tag ->
+                                val accent = TagPalette.colorFor(tag)
                                 val selected = state.notificationQuickTags.contains(tag)
                                 FilterChip(
                                     selected = selected,
                                     onClick = { onNotificationQuickTagToggle(tag, !selected) },
                                     enabled = selected || !atMaxQuickTags,
                                     label = { Text(tag, style = MaterialTheme.typography.labelMedium) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        labelColor = MaterialTheme.colorScheme.onSurface,
+                                        selectedContainerColor = accent.copy(alpha = 0.22f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = selected,
+                                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                                        selectedBorderColor = accent.copy(alpha = 0.65f),
+                                        disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                        disabledSelectedBorderColor = accent.copy(alpha = 0.35f)
+                                    ),
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -128,7 +150,8 @@ fun SettingsScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Tags", style = MaterialTheme.typography.titleMedium)
@@ -171,11 +194,24 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             rowTags.forEach { tag ->
+                                val accent = TagPalette.colorFor(tag)
                                 val visible = state.homeVisibleTags.contains(tag)
                                 FilterChip(
                                     selected = visible,
                                     onClick = { onHomeVisibleTagToggle(tag, !visible) },
                                     label = { Text(tag, style = MaterialTheme.typography.labelMedium) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        labelColor = MaterialTheme.colorScheme.onSurface,
+                                        selectedContainerColor = accent.copy(alpha = 0.22f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = visible,
+                                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                                        selectedBorderColor = accent.copy(alpha = 0.65f)
+                                    ),
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -215,7 +251,8 @@ fun SettingsScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Location suggestions", style = MaterialTheme.typography.titleMedium)
@@ -250,7 +287,8 @@ fun SettingsScreen(
         items(state.savedLocations, key = { it.id }) { loc ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(loc.label, style = MaterialTheme.typography.titleSmall)
@@ -269,7 +307,7 @@ fun SettingsScreen(
         }
 
         item {
-            TextButton(
+            OutlinedButton(
                 onClick = {
                     labelInput = ""
                     selectedTag = state.allTags.firstOrNull() ?: ""
@@ -283,7 +321,7 @@ fun SettingsScreen(
         }
 
         item {
-            TextButton(
+            OutlinedButton(
                 onClick = {
                     labelInput = ""
                     selectedTag = state.allTags.firstOrNull() ?: ""

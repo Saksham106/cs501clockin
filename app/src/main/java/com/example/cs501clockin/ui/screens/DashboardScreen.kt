@@ -113,6 +113,7 @@ fun DashboardScreen(
                 }
                 Surface(
                     tonalElevation = 2.dp,
+                    shadowElevation = 3.dp,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -132,8 +133,9 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-                )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -145,8 +147,7 @@ fun DashboardScreen(
                     ) {
                         Text(
                             text = "Day Overview",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleLarge
                         )
                         Text(
                             text = "  •  ${formatDayAndWeekday(selectedDayStart)}",
@@ -159,17 +160,17 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Total Tracked", style = MaterialTheme.typography.titleLarge)
+                        Text("Total Tracked", style = MaterialTheme.typography.titleMedium)
                         Text(
                             formatDurationMillis(totalTracked),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                     HorizontalDivider()
 
                     if (orderedTotals.isEmpty()) {
-                        Text("No sessions tracked for this day.")
+                        Text("No sessions tracked for this day.", style = MaterialTheme.typography.bodyMedium)
                     } else {
                         orderedTotals.forEach { (tag, duration) ->
                             DashboardTagRow(tag = tag, duration = duration)
@@ -183,21 +184,23 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)
-                )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("Timeline", style = MaterialTheme.typography.headlineSmall)
+                    Text("Timeline", style = MaterialTheme.typography.titleLarge)
                     Text(
                         "Longest segment (non-idle): ${formatDurationMillis(longestNonIdle)}",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     if (timelineItems.isEmpty()) {
-                        Text("No timeline entries for this day.")
+                        Text("No timeline entries for this day.", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -211,15 +214,20 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
-                )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("Last 7 Days - Active Overview", style = MaterialTheme.typography.headlineSmall)
-                    Text("Excludes today", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Last 7 Days - Active Overview", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Excludes today",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -228,11 +236,11 @@ fun DashboardScreen(
                     ) {
                         Text(
                             "Avg Active (tracked days - ${sevenDayStats.trackedDays}/7)",
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleMedium
                         )
                         Text(
                             formatDurationMillis(sevenDayStats.averageActivePerTrackedDay),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -244,7 +252,7 @@ fun DashboardScreen(
 
                     Text(
                         "Total - ${formatDurationMillis(sevenDayStats.totalAllTags)}",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.bodyMedium
                     )
 
                     Text("Avg per tag (tracked days)", style = MaterialTheme.typography.titleLarge)
@@ -282,10 +290,10 @@ private fun DashboardTagRow(tag: String, duration: Long) {
                 .background(dotColor)
         )
         Spacer(modifier = Modifier.width(10.dp))
-        Text(tag, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+        Text(tag, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
         Text(
             formatDurationMillis(duration),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -326,7 +334,7 @@ private fun TimelineItem(session: Session) {
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = formatDurationMillis(session.durationMillis()),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
     }

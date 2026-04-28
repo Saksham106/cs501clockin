@@ -10,6 +10,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.ListAlt
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -163,8 +173,16 @@ private fun ClockInRoot() {
                     Routes.Settings to "Settings"
                 )
                 items.forEach { (route, label) ->
+                    val selected = currentRoute == route
+                    val imageVector = when (route) {
+                        Routes.Home -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
+                        Routes.History -> if (selected) Icons.Filled.ListAlt else Icons.Outlined.ListAlt
+                        Routes.Dashboard -> if (selected) Icons.Filled.Dashboard else Icons.Outlined.Dashboard
+                        Routes.Settings -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
+                        else -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
+                    }
                     NavigationBarItem(
-                        selected = currentRoute == route,
+                        selected = selected,
                         onClick = {
                             navController.navigate(route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -174,7 +192,7 @@ private fun ClockInRoot() {
                                 restoreState = true
                             }
                         },
-                        icon = {},
+                        icon = { Icon(imageVector = imageVector, contentDescription = label) },
                         label = { Text(label) }
                     )
                 }
