@@ -8,7 +8,9 @@ import com.example.cs501clockin.data.repo.SessionRepository
 import com.example.cs501clockin.data.repo.UserPreferencesRepository
 import com.example.cs501clockin.data.state.ActiveSessionStore
 import com.example.cs501clockin.location.LocationRepository
+import com.example.cs501clockin.data.repo.homeScreenTagChips
 import com.example.cs501clockin.notification.SessionTrackingService
+import com.example.cs501clockin.widget.TagSwitchWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -61,6 +63,19 @@ class ClockInApp : Application() {
                     } else {
                         SessionTrackingService.stop(this@ClockInApp)
                     }
+                }
+        }
+
+        applicationScope.launch {
+            combine(
+                activeSessionStore.activeSession,
+                userPreferencesRepository.data
+            ) { session, prefs ->
+                session.tag to prefs.homeScreenTagChips()
+            }
+                .distinctUntilChanged()
+                .collect {
+                    TagSwitchWidgetProvider.requestUpdateAll(this@ClockInApp)
                 }
         }
     }

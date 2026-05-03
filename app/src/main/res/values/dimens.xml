@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compact chip row height keeps the widget short -->
+    <dimen name="widget_chip_height">34dp</dimen>
+</resources>

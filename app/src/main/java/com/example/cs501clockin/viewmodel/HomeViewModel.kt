@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.cs501clockin.data.repo.UserPreferencesRepository
+import com.example.cs501clockin.data.repo.homeScreenTagChips
 import com.example.cs501clockin.data.state.ActiveSessionStore
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
@@ -22,7 +23,8 @@ data class HomeUiState(
         id = System.currentTimeMillis(),
         tag = SessionTags.IDLE,
         startTimeMillis = System.currentTimeMillis()
-    )
+    ),
+    val tagColorArgbByTag: Map<String, Int> = emptyMap()
 )
 
 class HomeViewModel(
@@ -47,13 +49,13 @@ class HomeViewModel(
         _selectedTag,
         userPreferencesRepository.data
     ) { active, selected, prefs ->
-        val orderedVisible = prefs.allTags.filter { it in prefs.homeVisibleTags }
-        val visible = if (orderedVisible.isEmpty()) SessionTags.defaults else orderedVisible
+        val visible = prefs.homeScreenTagChips()
         val safeSelected = if (selected in visible) selected else (visible.firstOrNull() ?: SessionTags.IDLE)
         HomeUiState(
             tags = visible,
             selectedTag = safeSelected,
-            activeSession = active
+            activeSession = active,
+            tagColorArgbByTag = prefs.customTagColors
         )
     }.stateIn(
         scope = viewModelScope,

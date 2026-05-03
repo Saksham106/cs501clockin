@@ -26,7 +26,11 @@ object TagPalette {
         SessionTags.IDLE to Color(0xFF8F8F9B)
     )
 
-    fun colorFor(tag: String): Color = tagColors[tag] ?: Color(0xFF7A7A90)
+    fun colorFor(tag: String, customArgbByTag: Map<String, Int> = emptyMap()): Color {
+        customArgbByTag[tag]?.let { return it.argbToColor() }
+        tagColors[tag]?.let { return it }
+        return PastelTagColors.fallbackArgbForTagName(tag).argbToColor()
+    }
 
     fun sortIndex(tag: String): Int = orderedTags.indexOf(tag).takeIf { it >= 0 } ?: Int.MAX_VALUE
 

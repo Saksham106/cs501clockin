@@ -12,6 +12,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.cs501clockin.ClockInApp
 import com.example.cs501clockin.MainActivity
+import com.example.cs501clockin.widget.TagSwitchWidgetProvider
 import com.example.cs501clockin.R
 import com.example.cs501clockin.model.Session
 import com.example.cs501clockin.model.SessionTags
@@ -72,6 +73,7 @@ class SessionTrackingService : Service() {
                 withContext(Dispatchers.Main) {
                     val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     nm.notify(NOTIFICATION_ID, buildNotification(s, tags, allTags))
+                    TagSwitchWidgetProvider.requestUpdateAll(clockInApp)
                 }
             }
         }

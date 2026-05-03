@@ -66,8 +66,15 @@ Compose **UI** collects `StateFlow` / `Flow` state from **ViewModels**. ViewMode
 ### Future features
 
 - **Google Calendar sync** — Auto-suggest sessions from scheduled events.
-- **Lock screen widget** — Quick tag change from the lock screen.
-- **Automatic locations** — Infer frequent places without manual pin drops (privacy-sensitive; future research).
+
+**Shipped in app (extras):**
+
+- **Onboarding** — welcome dialog on first launch and one-time tips when you first open each bottom tab (Home, History, Dashboard, Settings); state in DataStore via `UserPreferencesRepository`.
+- **Home screen widget** (`TagSwitchWidgetProvider`) — same tag chips as **Home** (`homeScreenTagChips()` from DataStore); tap switches the active session. See **Home screen widget** below.
+
+### Out of scope
+
+- **Automatic inferred locations** — Inferring or auto-registering frequent places without the user explicitly adding saved locations (e.g. clustering GPS traces) is **not** part of this project; location behavior stays tied to **user-defined** saved places only.
 
 ### Team workflow
 
@@ -106,8 +113,9 @@ Aligned with **AI Disclosure** below: AI assisted with brainstorming, explanatio
 | Architecture diagrams (MVVM, deps, nav, schemas)        | **Done**            | Optional Cursor canvases (local IDE export); not part of Gradle sources |
 | Weather on Home                                         | **Not implemented** | Mentioned as future context in README only                              |
 | Google Calendar sync                                    | **Planned**         | Slide roadmap                                                           |
-| Lock screen widget                                      | **Planned**         | Slide roadmap                                                           |
-| Automatic inferred locations                            | **Planned**         | Slide roadmap                                                           |
+| Home screen tag widget                                  | **Done**            | `widget/TagSwitchWidgetProvider`; tags mirror Home                       |
+| Onboarding flow                                         | **Done**            | `WelcomeOnboardingDialog` + `TabOnboardingDialog` in `MainActivity`; DataStore flags |
+| Automatic inferred locations                            | **Out of scope**    | No auto-discovery of places; saved locations are user-defined only      |
 | In-memory Room tests for DAOs                           | **Done**            | `app/src/androidTest/.../data/db/*InstrumentedTest.kt` (instrumented)   |
 | JVM unit tests (model / time parsing)                   | **Done**            | `app/src/test/.../SessionDurationTest.kt`, `TimeParsingTest.kt`         |
 | Compose `@Preview` for main screens                     | **Done**            | `ui/preview/ClockInScreenPreviews.kt`                                   |
@@ -128,6 +136,10 @@ The Settings screen includes a **“Pick location on map”** feature using **Go
 ```properties
 MAPS_API_KEY=YOUR_REAL_KEY_HERE
 ```
+
+### Home screen widget
+
+Add the **ClockIn** widget from the system widget picker (long-press an empty area on the **home screen** → **Widgets**). The tag list is **scrollable** and shows **all** home tags (same set and order as `homeScreenTagChips()` from **Settings → home visible tags** and custom tags). Chip **background tints** use the same palette as Home (`TagPalette`). Tap a tag to run **`ActiveSessionStore.switchTo(tag)`**, matching the Home screen. Resize the widget vertically to show more rows at once; the list scrolls when there are many tags.
 
 ### Primary loop (recording what you did)
 

@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">cs501clockin</string>
+    <string name="widget_brand">ClockIn</string>
+    <string name="widget_description">Switch the same activity tags as on Home from your home screen.</string>
+    <string name="widget_session_line">Now: %1$s · %2$s</string>
+    <string name="widget_overflow_note">+%1$d more tag(s) — open the app to see all</string>
+
+    <string name="onboarding_welcome_title">Welcome to ClockIn</string>
+    <string name="onboarding_welcome_body">ClockIn helps you log what you actually did—not just what you planned.\n\n• Pick an activity tag on Home that matches what you\'re doing.\n• Tap Start / Switch to begin timing that tag; tap End (Idle) when you\'re done.\n• History lists saved sessions; tap one to edit or delete.\n• Dashboard shows time per tag for the day you choose.\n• Settings controls notifications, tags on Home, and saved locations for suggestions.\n\nAfter this, a short tip appears the first time you open each bottom tab.</string>
+    <string name="onboarding_got_it">Got it</string>
+    <string name="onboarding_skip">Skip</string>
+
+    <string name="onboarding_tip_home_title">Home</string>
+    <string name="onboarding_tip_home_body">Choose a tag and Start to record a session. Your active tag and elapsed time show below; use End to switch to Idle and save the segment. Optional location suggestions appear when you\'re near a saved place.</string>
+
+    <string name="onboarding_tip_history_title">History</string>
+    <string name="onboarding_tip_history_body">Browse sessions by day. Tap an entry to edit the tag, notes, or times—or delete it.</string>
+
+    <string name="onboarding_tip_dashboard_title">Dashboard</string>
+    <string name="onboarding_tip_dashboard_body">See how long you spent on each tag for the selected day. Use the arrows to move between days.</string>
+
+    <string name="onboarding_tip_settings_title">Settings</string>
+    <string name="onboarding_tip_settings_body">Turn notifications and location suggestions on or off, customize tags on Home and on the tracking notification, manage saved locations (including map pick when configured), and add custom tags.</string>
 </resources>

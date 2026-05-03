@@ -51,6 +51,7 @@ import java.util.Locale
 @Composable
 fun DashboardScreen(
     sessions: List<Session>,
+    tagColorArgbByTag: Map<String, Int> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val startOfToday = rememberStartOfTodayMillis()
@@ -173,7 +174,7 @@ fun DashboardScreen(
                         Text("No sessions tracked for this day.", style = MaterialTheme.typography.bodyMedium)
                     } else {
                         orderedTotals.forEach { (tag, duration) ->
-                            DashboardTagRow(tag = tag, duration = duration)
+                            DashboardTagRow(tag = tag, duration = duration, tagColorArgbByTag = tagColorArgbByTag)
                         }
                     }
                 }
@@ -207,7 +208,7 @@ fun DashboardScreen(
         }
 
         items(timelineItems, key = { it.id }) { session ->
-            TimelineItem(session = session)
+            TimelineItem(session = session, tagColorArgbByTag = tagColorArgbByTag)
         }
 
         item {
@@ -247,7 +248,8 @@ fun DashboardScreen(
 
                     SegmentedActiveBar(
                         totals = sevenDayStats.nonIdleTotals,
-                        totalNonIdle = sevenDayStats.totalNonIdle
+                        totalNonIdle = sevenDayStats.totalNonIdle,
+                        tagColorArgbByTag = tagColorArgbByTag
                     )
 
                     Text(
@@ -257,7 +259,7 @@ fun DashboardScreen(
 
                     Text("Avg per tag (tracked days)", style = MaterialTheme.typography.titleLarge)
                     sevenDayStats.averageByTag.forEach { (tag, avgDuration) ->
-                        DashboardTagRow(tag = tag, duration = avgDuration)
+                        DashboardTagRow(tag = tag, duration = avgDuration, tagColorArgbByTag = tagColorArgbByTag)
                     }
                 }
             }
@@ -276,8 +278,12 @@ private fun rememberStartOfTodayMillis(): Long {
 }
 
 @Composable
-private fun DashboardTagRow(tag: String, duration: Long) {
-    val dotColor = TagPalette.colorFor(tag)
+private fun DashboardTagRow(
+    tag: String,
+    duration: Long,
+    tagColorArgbByTag: Map<String, Int>
+) {
+    val dotColor = TagPalette.colorFor(tag, tagColorArgbByTag)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -300,8 +306,8 @@ private fun DashboardTagRow(tag: String, duration: Long) {
 }
 
 @Composable
-private fun TimelineItem(session: Session) {
-    val tagColor = TagPalette.colorFor(session.tag)
+private fun TimelineItem(session: Session, tagColorArgbByTag: Map<String, Int>) {
+    val tagColor = TagPalette.colorFor(session.tag, tagColorArgbByTag)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -343,7 +349,8 @@ private fun TimelineItem(session: Session) {
 @Composable
 private fun SegmentedActiveBar(
     totals: Map<String, Long>,
-    totalNonIdle: Long
+    totalNonIdle: Long,
+    tagColorArgbByTag: Map<String, Int>
 ) {
     if (totalNonIdle <= 0L || totals.isEmpty()) {
         Box(
@@ -370,7 +377,7 @@ private fun SegmentedActiveBar(
                     modifier = Modifier
                         .weight(duration.toFloat())
                         .fillMaxSize()
-                        .background(TagPalette.colorFor(tag))
+                        .background(TagPalette.colorFor(tag, tagColorArgbByTag))
                 )
             }
     }

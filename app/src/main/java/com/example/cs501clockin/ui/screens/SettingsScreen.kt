@@ -1,12 +1,20 @@
 package com.example.cs501clockin.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -29,15 +37,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.ui.components.MapPickerDialog
+import com.example.cs501clockin.ui.util.PastelTagColors
 import com.example.cs501clockin.ui.util.TagPalette
+import com.example.cs501clockin.ui.util.argbToColor
 import com.example.cs501clockin.viewmodel.SettingsUiState
 import com.google.android.gms.maps.model.LatLng
 
@@ -49,7 +61,7 @@ fun SettingsScreen(
     onLocationSuggestionsChanged: (Boolean) -> Unit,
     onNotificationQuickTagToggle: (tag: String, selected: Boolean) -> Unit,
     onHomeVisibleTagToggle: (tag: String, visible: Boolean) -> Unit,
-    onAddCustomTag: (String) -> Unit,
+    onAddCustomTag: (String, Int) -> Unit,
     onDeleteCustomTag: (String) -> Unit,
     onAddSavedLocation: (label: String, suggestedTag: String, radiusMeters: Int) -> Unit,
     onAddSavedLocationManual: (label: String, suggestedTag: String, radiusMeters: Int, latitude: Double, longitude: Double) -> Unit,
@@ -63,6 +75,7 @@ fun SettingsScreen(
     var radiusInput by remember { mutableStateOf("150") }
     var tagMenuExpanded by remember { mutableStateOf(false) }
     var newTagInput by remember { mutableStateOf("") }
+    var selectedPastelArgb by remember { mutableIntStateOf(PastelTagColors.CHOICES_ARGB.first()) }
     var pickedLatLng by remember { mutableStateOf<LatLng?>(null) }
 
     LazyColumn(
@@ -112,7 +125,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             rowTags.forEach { tag ->
-                                val accent = TagPalette.colorFor(tag)
+                                val accent = TagPalette.colorFor(tag, state.customTagColors)
                                 val selected = state.notificationQuickTags.contains(tag)
                                 FilterChip(
                                     selected = selected,
@@ -175,11 +188,20 @@ fun SettingsScreen(
                         )
                         TextButton(
                             onClick = {
-                                onAddCustomTag(newTagInput)
+                                onAddCustomTag(newTagInput, selectedPastelArgb)
                                 newTagInput = ""
                             }
                         ) { Text("Add") }
                     }
+                    Text(
+                        "Color",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    PastelColorPickerRow(
+                        selectedArgb = selectedPastelArgb,
+                        onSelect = { selectedPastelArgb = it }
+                    )
 
                     HorizontalDivider()
                     Text("Shown on Home", style = MaterialTheme.typography.titleSmall)
@@ -194,7 +216,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             rowTags.forEach { tag ->
-                                val accent = TagPalette.colorFor(tag)
+                                val accent = TagPalette.colorFor(tag, state.customTagColors)
                                 val visible = state.homeVisibleTags.contains(tag)
                                 FilterChip(
                                     selected = visible,
@@ -420,5 +442,41 @@ fun SettingsScreen(
                 showAddDialog = true
             }
         )
+    }
+}
+
+@Composable
+private fun PastelColorPickerRow(
+    selectedArgb: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scroll = rememberScrollState()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(scroll),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PastelTagColors.CHOICES_ARGB.forEach { argb ->
+            val selected = argb == selectedArgb
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(argb.argbToColor())
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)
+                        },
+                        shape = CircleShape
+                    )
+                    .clickable { onSelect(argb) }
+            )
+        }
     }
 }

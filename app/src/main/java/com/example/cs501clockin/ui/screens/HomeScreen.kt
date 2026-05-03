@@ -38,6 +38,7 @@ fun HomeScreen(
     tags: List<String>,
     selectedTag: String,
     activeSession: Session,
+    tagColorArgbByTag: Map<String, Int> = emptyMap(),
     onTagSelected: (String) -> Unit,
     onStart: () -> Unit,
     onEnd: () -> Unit,
@@ -118,7 +119,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         rowTags.forEach { tag ->
-                            val accent = TagPalette.colorFor(tag)
+                            val accent = TagPalette.colorFor(tag, tagColorArgbByTag)
                             val selected = tag == selectedTag
                             Button(
                                 onClick = { onTagSelected(tag) },

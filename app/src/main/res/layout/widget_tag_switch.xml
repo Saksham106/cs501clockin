@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  RemoteViews: ListView is supported (collection widget).
+  Tag chips scroll inside a fixed-height list so the widget stays compact on the home screen.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:paddingHorizontal="6dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="4dp">
+
+    <LinearLayout
+        android:id="@+id/widget_header_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="2dp">
+
+        <TextView
+            android:id="@+id/widget_brand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_brand"
+            android:textColor="@color/black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_session_line"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="1dp"
+            android:textColor="@color/black"
+            android:textSize="10sp"
+            android:alpha="0.85" />
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/widget_tag_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:minHeight="56dp"
+        android:scrollbars="vertical" />
+</LinearLayout>

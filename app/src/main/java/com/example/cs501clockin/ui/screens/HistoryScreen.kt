@@ -44,6 +44,7 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     sessions: List<Session>,
+    tagColorArgbByTag: Map<String, Int> = emptyMap(),
     onSessionClick: (Session) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -116,7 +117,7 @@ fun HistoryScreen(
             }
         } else {
             items(daySessions, key = { it.id }) { session ->
-                val accent = TagPalette.colorFor(session.tag)
+                val accent = TagPalette.colorFor(session.tag, tagColorArgbByTag)
                 // Match the Home screen's pastel tag styling (tinted, not saturated).
                 val container = accent.copy(alpha = 0.16f)
                 val shape = RoundedCornerShape(16.dp)

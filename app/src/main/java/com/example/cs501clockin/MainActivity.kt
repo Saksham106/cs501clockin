@@ -2,6 +2,7 @@ package com.example.cs501clockin
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.app.Application
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,7 +10,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Dashboard
@@ -30,12 +34,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.cs501clockin.data.repo.UserPreferences
+import com.example.cs501clockin.ui.onboarding.TabOnboardingDialog
+import com.example.cs501clockin.ui.onboarding.WelcomeOnboardingDialog
+import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -93,6 +102,11 @@ private fun ClockInRoot() {
     val context = LocalContext.current
     val app = context.applicationContext as ClockInApp
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    val prefs by app.userPreferencesRepository.data.collectAsStateWithLifecycle(
+        initialValue = UserPreferences()
+    )
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(app.activeSessionStore, app.userPreferencesRepository)
@@ -161,54 +175,56 @@ private fun ClockInRoot() {
     )
     val sessions by historyViewModel.sessions.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = { ClockInTopBar(title = topBarTitle) },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        bottomBar = {
-            NavigationBar {
-                val items = listOf(
-                    Routes.Home to "Home",
-                    Routes.History to "History",
-                    Routes.Dashboard to "Dashboard",
-                    Routes.Settings to "Settings"
-                )
-                items.forEach { (route, label) ->
-                    val selected = currentRoute == route
-                    val imageVector = when (route) {
-                        Routes.Home -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
-                        Routes.History -> if (selected) Icons.Filled.ListAlt else Icons.Outlined.ListAlt
-                        Routes.Dashboard -> if (selected) Icons.Filled.Dashboard else Icons.Outlined.Dashboard
-                        Routes.Settings -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
-                        else -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
-                    }
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(imageVector = imageVector, contentDescription = label) },
-                        label = { Text(label) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = { ClockInTopBar(title = topBarTitle) },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            bottomBar = {
+                NavigationBar {
+                    val items = listOf(
+                        Routes.Home to "Home",
+                        Routes.History to "History",
+                        Routes.Dashboard to "Dashboard",
+                        Routes.Settings to "Settings"
                     )
+                    items.forEach { (route, label) ->
+                        val selected = currentRoute == route
+                        val imageVector = when (route) {
+                            Routes.Home -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
+                            Routes.History -> if (selected) Icons.Filled.ListAlt else Icons.Outlined.ListAlt
+                            Routes.Dashboard -> if (selected) Icons.Filled.Dashboard else Icons.Outlined.Dashboard
+                            Routes.Settings -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
+                            else -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
+                        }
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = { Icon(imageVector = imageVector, contentDescription = label) },
+                            label = { Text(label) }
+                        )
+                    }
                 }
             }
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.Home,
-            modifier = androidx.compose.ui.Modifier.padding(innerPadding)
-        ) {
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.Home,
+                modifier = Modifier.padding(innerPadding)
+            ) {
             composable(Routes.Home) {
                 HomeScreen(
                     tags = homeUiState.tags,
                     selectedTag = homeUiState.selectedTag,
                     activeSession = homeUiState.activeSession,
+                    tagColorArgbByTag = homeUiState.tagColorArgbByTag,
                     onTagSelected = homeViewModel::onTagSelected,
                     onStart = homeViewModel::startSession,
                     onEnd = { homeViewModel.endSession() },
@@ -224,6 +240,7 @@ private fun ClockInRoot() {
             composable(Routes.History) {
                 HistoryScreen(
                     sessions = sessions,
+                    tagColorArgbByTag = prefs.customTagColors,
                     onSessionClick = { session ->
                         navController.navigate(Routes.editSession(session.id))
                     }
@@ -232,13 +249,15 @@ private fun ClockInRoot() {
 
             composable(Routes.Dashboard) {
                 DashboardScreen(
-                    sessions = sessions
+                    sessions = sessions,
+                    tagColorArgbByTag = prefs.customTagColors
                 )
             }
 
             composable(Routes.Settings) {
                 val settingsViewModel: SettingsViewModel = viewModel(
                     factory = SettingsViewModelFactory(
+                        context.applicationContext as Application,
                         app.userPreferencesRepository,
                         app.savedLocationRepository,
                         app.locationRepository
@@ -284,6 +303,71 @@ private fun ClockInRoot() {
                     onDelete = {
                         editVm.delete()
                         navController.popBackStack()
+                    }
+                )
+            }
+        }
+        }
+
+        when {
+            !prefs.onboardingWelcomeCompleted -> {
+                WelcomeOnboardingDialog(
+                    onDismiss = {
+                        scope.launch {
+                            app.userPreferencesRepository.setOnboardingWelcomeCompleted(true)
+                        }
+                    }
+                )
+            }
+
+            prefs.onboardingWelcomeCompleted &&
+                currentRoute == Routes.Home &&
+                !prefs.onboardingTipHomeSeen -> {
+                TabOnboardingDialog(
+                    route = Routes.Home,
+                    onDismiss = {
+                        scope.launch {
+                            app.userPreferencesRepository.setOnboardingTipHomeSeen(true)
+                        }
+                    }
+                )
+            }
+
+            prefs.onboardingWelcomeCompleted &&
+                currentRoute == Routes.History &&
+                !prefs.onboardingTipHistorySeen -> {
+                TabOnboardingDialog(
+                    route = Routes.History,
+                    onDismiss = {
+                        scope.launch {
+                            app.userPreferencesRepository.setOnboardingTipHistorySeen(true)
+                        }
+                    }
+                )
+            }
+
+            prefs.onboardingWelcomeCompleted &&
+                currentRoute == Routes.Dashboard &&
+                !prefs.onboardingTipDashboardSeen -> {
+                TabOnboardingDialog(
+                    route = Routes.Dashboard,
+                    onDismiss = {
+                        scope.launch {
+                            app.userPreferencesRepository.setOnboardingTipDashboardSeen(true)
+                        }
+                    }
+                )
+            }
+
+            prefs.onboardingWelcomeCompleted &&
+                currentRoute == Routes.Settings &&
+                !prefs.onboardingTipSettingsSeen -> {
+                TabOnboardingDialog(
+                    route = Routes.Settings,
+                    onDismiss = {
+                        scope.launch {
+                            app.userPreferencesRepository.setOnboardingTipSettingsSeen(true)
+                        }
                     }
                 )
             }

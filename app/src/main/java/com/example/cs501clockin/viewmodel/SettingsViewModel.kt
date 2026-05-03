@@ -1,13 +1,17 @@
 package com.example.cs501clockin.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.cs501clockin.data.repo.SavedLocationRepository
 import com.example.cs501clockin.data.repo.UserPreferencesRepository
+import com.example.cs501clockin.ui.util.PastelTagColors
 import com.example.cs501clockin.location.LocationRepository
 import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.SavedLocation
+import com.example.cs501clockin.widget.TagSwitchWidgetProvider
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,14 +27,16 @@ data class SettingsUiState(
     val allTags: List<String> = emptyList(),
     val homeVisibleTags: Set<String> = emptySet(),
     val notificationQuickTags: Set<String> = emptySet(),
+    val customTagColors: Map<String, Int> = emptyMap(),
     val savedLocations: List<SavedLocation> = emptyList()
 )
 
 class SettingsViewModel(
+    application: Application,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val savedLocationRepository: SavedLocationRepository,
     private val locationRepository: LocationRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val events = _events.asSharedFlow()
@@ -45,6 +51,7 @@ class SettingsViewModel(
             allTags = prefs.allTags,
             homeVisibleTags = prefs.homeVisibleTags,
             notificationQuickTags = prefs.notificationQuickTags,
+            customTagColors = prefs.customTagColors,
             savedLocations = saved
         )
     }.stateIn(
@@ -95,19 +102,22 @@ class SettingsViewModel(
         }
     }
 
-    fun addCustomTag(tag: String) {
+    fun addCustomTag(tag: String, colorArgb: Int) {
         val cleaned = tag.trim()
         if (cleaned.isEmpty()) {
             viewModelScope.launch { _events.emit("Please enter a tag name.") }
             return
         }
+        val safeColor =
+            if (colorArgb in PastelTagColors.CHOICES_ARGB) colorArgb else PastelTagColors.CHOICES_ARGB.first()
         viewModelScope.launch {
-            userPreferencesRepository.addCustomTag(cleaned)
+            userPreferencesRepository.addCustomTag(cleaned, safeColor)
             // Auto-show on home if it was previously empty selection edge case.
             val prefs = userPreferencesRepository.data.first()
             if (cleaned !in prefs.homeVisibleTags) {
                 userPreferencesRepository.setHomeVisibleTags(prefs.homeVisibleTags + cleaned)
             }
+            TagSwitchWidgetProvider.requestUpdateAll(getApplication())
             _events.emit("Added tag.")
         }
     }
@@ -115,6 +125,7 @@ class SettingsViewModel(
     fun deleteCustomTag(tag: String) {
         viewModelScope.launch {
             userPreferencesRepository.deleteCustomTag(tag)
+            TagSwitchWidgetProvider.requestUpdateAll(getApplication())
             _events.emit("Deleted tag.")
         }
     }
@@ -188,6 +199,7 @@ class SettingsViewModel(
 }
 
 class SettingsViewModelFactory(
+    private val application: Application,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val savedLocationRepository: SavedLocationRepository,
     private val locationRepository: LocationRepository
@@ -195,6 +207,7 @@ class SettingsViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return SettingsViewModel(
+            application,
             userPreferencesRepository,
             savedLocationRepository,
             locationRepository
