@@ -12,8 +12,6 @@
 
 This repository contains our CS501 Clock In Android implementation of ClockIn.
 
-## Presentation documentation
-
 ### Product vision
 
 **ClockIn** helps you track **what you actually did**, not just what you planned—fast session tracking, history, editing, and lightweight reflection so you can see where time really went.
@@ -31,24 +29,150 @@ This repository contains our CS501 Clock In Android implementation of ClockIn.
 3. **Get suggestions** — Optional **location-based** notifications suggest switching to a tag when you are near a **saved location** (Settings).
 4. **Dashboard** — See **time per tag** for a selected day (defaults to today; use arrows to move between days), excluding idle where applicable.
 
-### New / extended features
-
-- **Location-based suggestions** — Proximity to saved locations drives optional suggestion notifications (see `SuggestionsViewModel`, `LocationSuggestionNotifier`).
-- **Persistent notification** — Foreground **session tracking** service with actions to switch tags; which tags appear is configured in **Settings → Notifications** (up to three quick tags).
-- **Custom tags** — Create tags in Settings; choose which tags appear on **Home** (home visible tags).
-
 ### Navigation
 
 Bottom navigation: **Home**, **History**, **Dashboard**, **Settings**. **Edit session** is a separate route (`edit/{sessionId}`) opened from History. See the **Navigation map** section below.
 
-### MVVM flow
+### Architecture
 
-Compose **UI** collects `StateFlow` / `Flow` state from **ViewModels**. ViewModels call **repositories** and **`ActiveSessionStore`** (in-memory active session); repositories map **Room entities** and **DataStore** preferences to domain models. A **foreground service** also observes the same store and preferences to keep the ongoing notification in sync. Team members using Cursor may keep exportable architecture canvases locally (e.g. `clockin-diagram-mvvm-flow.canvas.tsx`); they are not required to build the app.
+We follow **MVVM**: Compose **UI** observes `**StateFlow` / `Flow`** from **ViewModels**; ViewModels call **repositories** and `**ActiveSessionStore`**; repositories encapsulate **Room** and **DataStore. Platform components (foreground service, location, widget) sit alongside the UI layer and read the same prefs / session sources where needed.
 
-### Data schemas
 
-- **Room** (`clockin.db`): tables **`sessions`** and **`saved_locations`** — see `app/src/main/java/com/example/cs501clockin/data/db/`.
-- **DataStore** (`user_prefs`): notification toggles, location suggestions toggle, custom tags, home visible tags, notification quick tags — see `UserPreferencesRepository.kt`.
+| Layer                        | Role                                                              | Main locations                                                      |
+| ---------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **UI**                       | Screens, dialogs, onboarding, Compose previews                    | `MainActivity.kt`, `ui/screens/`*, `ui/onboarding/*`, `ui/preview/` |
+| **Presentation logic**       | State, validation, bridging user actions                          | `viewmodel/`                                                        |
+| **Domain & in-memory state** | `Session`, tag names, durations; **live session** until End       | `model/`, `data/state/ActiveSessionStore.kt`                        |
+| **Data**                     | SQLite via Room; user prefs via DataStore                         | `data/db/`*, `data/repo/*`                                          |
+| **Platform & integrations**  | Ongoing tracking notification, fused location, map picker, widget | `notification/`, `location/`, `widget/`, `MapPickerDialog`          |
+
+
+**Important behavior:** `**ActiveSessionStore`** holds the *current* session in memory while tracking. When the user ends a session, the store persists a completed row via `**SessionRepository`** into Room. **Session rows do not store latitude/longitude**; GPS is used only to compare **current position ↔ saved_locations** for optional tag suggestions.
+
+```mermaid
+flowchart TB
+  UI[Compose UI screens]
+  VM[ViewModels]
+  STORE[ActiveSessionStore]
+  REPO[(SessionRepository / SavedLocationRepository / UserPrefs)]
+  ROOM[(Room clockin.db)]
+  DS[(DataStore user_prefs)]
+  FG[SessionTrackingService]
+  UI --> VM
+  VM --> STORE
+  VM --> REPO
+  REPO --> ROOM
+  REPO --> DS
+  STORE --> FG
+```
+
+
+
+---
+
+### Database usage and schema
+
+#### Room (`clockin.db`)
+
+- **Initialization:** `Room.databaseBuilder` in `ClockInApp.kt`; database file name `**clockin.db`.
+- **Version:** `**2`** (`AppDatabase.kt`); `**exportSchema = true\*\*` (JSON exports can live under version control when generated).
+- **Migrations:** the app uses `**fallbackToDestructiveMigration()`** — a schema bump **drops and recreates** the DB (acceptable for coursework / iterative development, **not a production migration strategy).
+
+**Table `sessions`** (`SessionEntity`)
+
+
+| Column            | Type      | Notes                                                               |
+| ----------------- | --------- | ------------------------------------------------------------------- |
+| `id`              | `Long`    | **Primary key** (timestamp-based ID from the active session flow)   |
+| `tag`             | `String`  | Activity label (built-in or custom tag name)                        |
+| `startTimeMillis` | `Long`    | Epoch ms                                                            |
+| `endTimeMillis`   | `Long?`   | `null` while active only in memory; set when persisted as completed |
+| `notes`           | `String?` | Optional                                                            |
+| `edited`          | `Boolean` | User edited after initial save                                      |
+
+
+**Table `saved_locations`** (`SavedLocationEntity`)
+
+
+| Column         | Type     | Notes                                         |
+| -------------- | -------- | --------------------------------------------- |
+| `id`           | `Long`   | **Primary key**, `autoGenerate = true`        |
+| `label`        | `String` | User-visible place name                       |
+| `latitude`     | `Double` | WGS84                                         |
+| `longitude`    | `Double` | WGS84                                         |
+| `suggestedTag` | `String` | Tag name suggested when nearby                |
+| `radiusMeters` | `Int`    | Geofence-style radius (default 150 in entity) |
+
+
+**Relationships:** No SQL foreign keys. `**sessions.tag`** and `**saved_locations.suggestedTag\*\*` logically reference tag strings from defaults + DataStore custom tags.
+
+**Indexes:** Only primary keys; no extra Room indices in this project.
+
+**DAO usage:** Typical **Flow** / **suspend** reads and writes (`SessionDao`, `SavedLocationDao`); repositories (`SessionRepository`, `SavedLocationRepository`) are the callers.
+
+#### Jetpack DataStore Preferences (`user_prefs`)
+
+File-backed preferences via `preferencesDataStore` in `**UserPreferencesRepository.kt`.
+
+
+| Preference key(s)                                           | Type                 | Purpose                                         |
+| ----------------------------------------------------------- | -------------------- | ----------------------------------------------- |
+| `notifications_enabled`                                     | Boolean              | Session tracking notification on/off            |
+| `location_suggestions_enabled`                              | Boolean              | Near-place tag suggestions                      |
+| `custom_tags`                                               | String set           | Custom tag names (excluding built-in defaults)  |
+| `home_visible_tags`                                         | String set           | Which tags appear on Home / widget order source |
+| `notification_quick_tags`                                   | String set           | Up to **3** tags for notification actions       |
+| `custom_tag_colors`                                         | String (JSON object) | Per–custom-tag ARGB (`tagName` → `int`)         |
+| `onboarding_welcome_completed`                              | Boolean              | First-run welcome                               |
+| `onboarding_tip_home_seen` … `onboarding_tip_settings_seen` | Boolean              | One-time tab tips                               |
+
+
+**Derived state:** `UserPreferences.allTags` merges `**SessionTags.defaults`** with `**custom_tags\*\*` for pickers and validation.
+
+---
+
+### APIs, sensors, and platform usage
+
+#### Permissions (`AndroidManifest.xml`)
+
+
+| Permission                                                      | Why                                                                   |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `**ACCESS_FINE_LOCATION`**                                      | Single high-accuracy fixes and suggestions vs. `**saved_locations**`  |
+| `**INTERNET**`                                                  | **Google Maps** tiles/API for map picker                              |
+| `**FORECROUND_SERVICE`** + `**FORECROUND_SERVICE_DATA_SYNC\*\*` | `**SessionTrackingService`** while a session may be ongoing           |
+| `**POST_NOTIFICATIONS**`                                        | Android **13+** runtime prompt for ongoing / suggestion notifications |
+
+
+Runtime requests: **fine location** (Home / flows that need fixes), **post-notifications** (requested from `**MainActivity` on launch where applicable).
+
+#### Location (sensor & Google Play services)
+
+- `**LocationRepository`** uses `**LocationServices.getFusedLocationProviderClient**`, `**getCurrentLocation**`, `**LocationRequest**` / `**Priority**`, `**LocationCallback**` as needed (`location/LocationRepository.kt`).
+- **Not** stored per session; used to compute distance to saved places in `**SuggestionsViewModel`.
+
+#### Google Maps SDK
+
+- **Maps SDK for Android** for **Settings → Pick location on map** (`MapPickerDialog`, manifest `com.google.android.geo.API_KEY` → string from `**local.properties` `MAPS_API_KEY` at build time).
+- Requires **network** for map imagery.
+
+#### Notifications & background work
+
+- `**SessionTrackingService`**: foreground service, `**exported="false"`**, type `**dataSync**`; builds an ongoing `**Notification**`with quick actions wired to`**ActiveSessionStore.switchTo(tag)\*\*`.
+- `**LocationSuggestionNotifier**`: notifies when a saved-place suggestion fires (behavior described in README user flows).
+- `**SuggestionActionReceiver**`: `**exported="false"**`, handles taps from suggestion UX.
+
+#### App widget
+
+- `**TagSwitchWidgetProvider**` + `**TagWidgetRemoteViewsService**` (`**BIND_REMOTEVIEWS**`) supply a scrollable `**RemoteViews**` list of tags; `**WidgetTagClickReceiver**` applies tag switches consistent with Home.
+
+#### Other APIs
+
+- **Jetpack Navigation Compose** (`NavHost`, argument for edit route).
+- **Kotlin coroutines / Flow** across UI, datastore, Room, service.
+- **Material 3** Compose components for UI.
+
+---
 
 ### Debugging and testing strategy
 
@@ -63,62 +187,53 @@ Compose **UI** collects `StateFlow` / `Flow` state from **ViewModels**. ViewMode
 - Host (fast): `./gradlew :app:testDebugUnitTest`
 - Device / emulator: `./gradlew :app:connectedDebugAndroidTest` (runs instrumented tests including Room DAO tests)
 
-### Future features
+### Team responsibilities and contributions
 
-- **Google Calendar sync** — Auto-suggest sessions from scheduled events.
+We divided ownership **by subsystem** while keeping integration **shared** so no single person was bottlenecked at merge time. The table below summarizes **primary** ownership; many items were **reviewed or touched by multiple people** during integration and QA.
 
-**Shipped in app (extras):**
 
-- **Onboarding** — welcome dialog on first launch and one-time tips when you first open each bottom tab (Home, History, Dashboard, Settings); state in DataStore via `UserPreferencesRepository`.
-- **Home screen widget** (`TagSwitchWidgetProvider`) — same tag chips as **Home** (`homeScreenTagChips()` from DataStore); tap switches the active session. See **Home screen widget** below.
+| Team member      | Primary ownership                                                                                                                                                                                                                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sadid**        | Room schema/DAOs/repositories (`**sessions`**, `**saved_locations`**), `**SessionTrackingService**`and ongoing notification plumbing,`**LocationRepository**`and suggestion pipeline,`**LocationSuggestionNotifier**`/ receivers,`**ActiveSessionStore` ↔ foreground service coordination                                                   |
+| **Saksham**      | Compose **UI/UX**: Home, History, Dashboard, Edit session, Settings layouts; **navigation** scaffolding; `**Dashboard`** and history presentation; `**MapPickerDialog\*\*` UX integration; onboarding/dialog polish where applicable                                                                                                        |
+| **Shared / all** | **Architecture** conventions (MVVM boundaries), `**MainActivity`** / `**ClockInApp`**wiring,`**UserPreferencesRepository**` / DataStore semantics, **home screen widget**, **Gradle**/build hygiene, **instrumented DAO tests**, **JVM unit tests**, **Compose previews**, **README**, **presentation, regression passes on emulator/device |
 
-### Out of scope
 
-- **Automatic inferred locations** — Inferring or auto-registering frequent places without the user explicitly adding saved locations (e.g. clustering GPS traces) is **not** part of this project; location behavior stays tied to **user-defined** saved places only.
-
-### Team workflow
-
-- **Sadid** — Data layer, Room, notifications, location logic.
-- **Saksham** — UI/UX, Compose screens, navigation, dashboard.
-- **Shared** — Architecture, testing, debugging, integration, presentation.
-
-### AI usage
-
-Aligned with **AI Disclosure** below: AI assisted with brainstorming, explanations, boilerplate, and debugging; all outputs were reviewed, tested, and corrected before acceptance.
+**How we collaborated:** small tasks with clear acceptance criteria; frequent sync on **.prefs vs. notification vs. widget** consistency; PR or informal review before treating a feature done; emulator/device verification after merges (permissions, notification actions, suggestion flow).
 
 ---
 
 ## Feature list and status
 
-| Feature                                                 | Status              | Notes                                                                   |
-| ------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------- |
-| Bottom navigation (Home, History, Dashboard, Settings)  | **Done**            | `MainActivity.kt`, `Routes.kt`                                          |
-| Tag-based sessions (start / end / switch)               | **Done**            | `HomeViewModel`, `ActiveSessionStore`                                   |
-| Idle vs. non-idle session model                         | **Done**            | `SessionTags`, store persists completed sessions                        |
-| Session history list                                    | **Done**            | `HistoryScreen`, `HistoryViewModel`, Room Flow                          |
-| Edit session (tag, notes, times)                        | **Done**            | `EditSessionScreen`, `EditSessionViewModel`                             |
-| Delete session                                          | **Done**            | From edit screen → `SessionRepository.deleteById`                       |
-| Dashboard: time per tag for a day                       | **Done**            | `DashboardScreen` with day offset (not a single “week” aggregate bar)   |
-| DataStore preferences (notifications, tags, visibility) | **Done**            | `UserPreferencesRepository.kt`                                          |
-| Custom tags                                             | **Done**            | Settings CRUD on preferences                                            |
-| Home visible tags                                       | **Done**            | Filters chips on Home                                                   |
-| Foreground session tracking + notification actions      | **Done**            | `SessionTrackingService`, started from `ClockInApp` when prefs allow    |
-| Notification quick tags (up to 3)                       | **Done**            | Settings; enforced in repository                                        |
-| Saved locations (label, lat/lon, radius, suggested tag) | **Done**            | Room `saved_locations`; CRUD in Settings                                |
-| Map picker for saved locations                          | **Done**            | Requires `MAPS_API_KEY` in `local.properties`                           |
-| Location-based tag suggestions                          | **Done**            | `SuggestionsViewModel` + `LocationSuggestionNotifier`                   |
-| Fused location for current position                     | **Done**            | `LocationRepository` (Play Services)                                    |
-| Location permission flow                                | **Done**            | Home / Settings as applicable                                           |
-| Post-notifications permission (Android 13+)             | **Done**            | `MainActivity`                                                          |
-| Architecture diagrams (MVVM, deps, nav, schemas)        | **Done**            | Optional Cursor canvases (local IDE export); not part of Gradle sources |
-| Weather on Home                                         | **Not implemented** | Mentioned as future context in README only                              |
-| Google Calendar sync                                    | **Planned**         | Slide roadmap                                                           |
-| Home screen tag widget                                  | **Done**            | `widget/TagSwitchWidgetProvider`; tags mirror Home                       |
-| Onboarding flow                                         | **Done**            | `WelcomeOnboardingDialog` + `TabOnboardingDialog` in `MainActivity`; DataStore flags |
-| Automatic inferred locations                            | **Out of scope**    | No auto-discovery of places; saved locations are user-defined only      |
-| In-memory Room tests for DAOs                           | **Done**            | `app/src/androidTest/.../data/db/*InstrumentedTest.kt` (instrumented)   |
-| JVM unit tests (model / time parsing)                   | **Done**            | `app/src/test/.../SessionDurationTest.kt`, `TimeParsingTest.kt`         |
-| Compose `@Preview` for main screens                     | **Done**            | `ui/preview/ClockInScreenPreviews.kt`                                   |
+
+| Feature                                                 | Status           | Notes                                                                                |
+| ------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------ |
+| Bottom navigation (Home, History, Dashboard, Settings)  | **Done**         | `MainActivity.kt`, `Routes.kt`                                                       |
+| Tag-based sessions (start / end / switch)               | **Done**         | `HomeViewModel`, `ActiveSessionStore`                                                |
+| Idle vs. non-idle session model                         | **Done**         | `SessionTags`, store persists completed sessions                                     |
+| Session history list                                    | **Done**         | `HistoryScreen`, `HistoryViewModel`, Room Flow                                       |
+| Edit session (tag, notes, times)                        | **Done**         | `EditSessionScreen`, `EditSessionViewModel`                                          |
+| Delete session                                          | **Done**         | From edit screen → `SessionRepository.deleteById`                                    |
+| Dashboard: time per tag for a day                       | **Done**         | `DashboardScreen` with day offset (not a single “week” aggregate bar)                |
+| DataStore preferences (notifications, tags, visibility) | **Done**         | `UserPreferencesRepository.kt`                                                       |
+| Custom tags                                             | **Done**         | Settings CRUD on preferences                                                         |
+| Home visible tags                                       | **Done**         | Filters chips on Home                                                                |
+| Foreground session tracking + notification actions      | **Done**         | `SessionTrackingService`, started from `ClockInApp` when prefs allow                 |
+| Notification quick tags (up to 3)                       | **Done**         | Settings; enforced in repository                                                     |
+| Saved locations (label, lat/lon, radius, suggested tag) | **Done**         | Room `saved_locations`; CRUD in Settings                                             |
+| Map picker for saved locations                          | **Done**         | Requires `MAPS_API_KEY` in `local.properties`                                        |
+| Location-based tag suggestions                          | **Done**         | `SuggestionsViewModel` + `LocationSuggestionNotifier`                                |
+| Fused location for current position                     | **Done**         | `LocationRepository` (Play Services)                                                 |
+| Location permission flow                                | **Done**         | Home / Settings as applicable                                                        |
+| Post-notifications permission (Android 13+)             | **Done**         | `MainActivity`                                                                       |
+| Google Calendar sync                                    | **Planned**      | Slide roadmap                                                                        |
+| Home screen tag widget                                  | **Done**         | `widget/TagSwitchWidgetProvider`; tags mirror Home                                   |
+| Onboarding flow                                         | **Done**         | `WelcomeOnboardingDialog` + `TabOnboardingDialog` in `MainActivity`; DataStore flags |
+| Automatic inferred locations                            | **Out of scope** | No auto-discovery of places; saved locations are user-defined only                   |
+| In-memory Room tests for DAOs                           | **Done**         | `app/src/androidTest/.../data/db/*InstrumentedTest.kt` (instrumented)                |
+| JVM unit tests (model / time parsing)                   | **Done**         | `app/src/test/.../SessionDurationTest.kt`, `TimeParsingTest.kt`                      |
+| Compose `@Preview` for main screens                     | **Done**         | `ui/preview/ClockInScreenPreviews.kt`                                                |
+
 
 ---
 
@@ -139,12 +254,12 @@ MAPS_API_KEY=YOUR_REAL_KEY_HERE
 
 ### Home screen widget
 
-Add the **ClockIn** widget from the system widget picker (long-press an empty area on the **home screen** → **Widgets**). The tag list is **scrollable** and shows **all** home tags (same set and order as `homeScreenTagChips()` from **Settings → home visible tags** and custom tags). Chip **background tints** use the same palette as Home (`TagPalette`). Tap a tag to run **`ActiveSessionStore.switchTo(tag)`**, matching the Home screen. Resize the widget vertically to show more rows at once; the list scrolls when there are many tags.
+Add the **ClockIn** widget from the system widget picker (long-press an empty area on the **home screen** → **Widgets**). The tag list is **scrollable** and shows **all** home tags (same set and order as `homeScreenTagChips()` from **Settings → home visible tags** and custom tags). Chip **background tints** use the same palette as Home (`TagPalette` / per-tag colors for custom tags). Tap a tag to run `**ActiveSessionStore.switchTo(tag)`, matching the Home screen. Resize the widget vertically to show more rows at once; the list scrolls when there are many tags.
 
 ### Primary loop (recording what you did)
 
 1. Open the app — lands on **Home** (Quick Start).
-2. **Choose an activity tag** (e.g., study, work) that best describes what you are _actually_ doing.
+2. **Choose an activity tag** (e.g., study, work) that best describes what you are *actually* doing.
 3. Tap **Start** to begin a timed session for that tag.
 4. When you switch tasks or finish, tap **End** to close the session. The entry is **saved locally** with start/end times and metadata.
 5. Repeat through the day to build an honest log of real activity (not just plans).
@@ -153,9 +268,9 @@ On **Home**, users can **grant location** (optional) and refresh **current coord
 
 ### Reviewing and comparing intention vs. reality
 
-6. **History** — scroll the list of saved sessions. **Tap a session** to open **Edit session**, where you can update details, **save** changes, or **delete** the entry, then return to History.
-7. **Dashboard** — see **today’s totals by activity tag** (excluding idle) to compare how time was actually spent.
-8. **Settings** — notifications, location suggestions, custom tags, home/notification tag picks, and saved locations (including map picker when a Maps API key is configured).
+1. **History** — scroll the list of saved sessions. **Tap a session** to open **Edit session**, where you can update details, **save** changes, or **delete** the entry, then return to History.
+2. **Dashboard** — see **today’s totals by activity tag** (excluding idle) to compare how time was actually spent.
+3. **Settings** — notifications, location suggestions, custom tags, home/notification tag picks, and saved locations (including map picker when a Maps API key is configured).
 
 ### Navigation map
 
@@ -172,44 +287,18 @@ flowchart LR
   E --> |Save or Delete| Y
 ```
 
-## AI Disclosure
 
-### How we used AI
 
-- **Understanding APIs and errors**: clarifying Android/Gradle/Kotlin error messages and suggesting likely causes.
-- **Small code patterns**: generating _candidate_ snippets for common Android patterns (e.g., UI wiring, data classes, null-safety, formatting).
-- **Refactoring suggestions**: proposing cleaner structure, naming, or decomposition after we already understood the behavior we needed.
-- **Test/edge-case brainstorming**: listing cases to verify manually in the emulator/device.
+## AI disclosure and semester reflection
 
-### What we did not use AI for
+Assistants (**Cursor**, **ChatGPT**) were used as **iteration helpers**, not a substitute for syllabus, rubrics, or privacy policy—we verified everything in-studio and on emulator/device. They also helped write the README.
 
-- **No blind copy/paste** of large, unreviewed solutions.
-- **No fabrication acceptance**: we did not accept claims without verifying in code, Android Studio, or official documentation.
-- **No bypassing learning goals**: we did not use AI to avoid understanding course concepts; we used it to accelerate iteration after we understood requirements.
+**How we used AI (semester):** explain Android/API concepts and stack traces; small Compose/Room/`DataStore` snippets and wiring; refactor ideas after behavior was agreed; brainstorming edge cases for manual QA and instrumented DAO tests; README/onboarding wording drafts.
 
-### Acceptance / rejection criteria (how we stayed responsible)
+**Where it touched the work:** **Architecture**—mostly reaffirmed MVVM + repositories + `**ActiveSessionStore`** (we kept changes small). **Code**—scaffolding for notifications, widget `RemoteViews`, prefs JSON for tag colors—all reviewed before merge. **Testing**—Flow DAO test patterns and “what to assert” reminders; we wrote assertions. **UX**—onboarding/tab-tip pattern and custom-tag color picker drafts; copy and `**Color`/ARGB handling validated on-device.
 
-We treated AI output as a draft. We **accepted** suggestions only when they:
+**What it accelerated:** faster green builds after dependency churn, first cut of widget tap → `**ActiveSessionStore`**, `**DataStore\*\`* key/normalization tweaks, documenting schema/API tables in README.
 
-- compiled and ran in our project setup,
-- matched assignment requirements and our app’s UX expectations,
-- were understandable to the team (we could explain the code),
-- and did not introduce security/privacy regressions.
+**Rejections:** auto-inferred locations vs **user-defined** places (out of scope); multi-module Gradle / `**Hilt`** / backends for this local-first app; wrong or deprecated APIs vs our **targetSdk**; stacks that behaved badly (e.g. notification vs store sync, broken Compose `**Color` from raw ARGB—we fixed by component decode); unreadable “clever” code for demos.
 
-We **rejected or revised** suggestions when they:
-
-- relied on deprecated APIs or mismatched library versions,
-- introduced unnecessary complexity or architecture changes,
-- produced incorrect behavior on-device,
-- or conflicted with course constraints or our existing code style.
-
-## Team Progress & Collaboration
-
-We coordinated work to keep contributions **balanced** and to avoid integration surprises. Our collaboration emphasized frequent communication, small reviewable changes, and clear ownership of features.
-
-### Collaboration process
-
-- **Planning**: agreed on requirements, broke work into small tasks, and wrote down acceptance criteria (what “done” means).
-- **Coordination**: regular check-ins to unblock each other and prevent duplicate work.
-- **Integration**: merged changes frequently and resolved conflicts early rather than in one large end-of-sprint merge.
-- **Quality control**: team members reviewed each other’s changes (informally or via PRs), and we tested flows on emulator/device after merges.
+**Merge bar:** builds, passes spot checks on device/emulator, matches assignment constraints, teammate can explain the diff without AI.
