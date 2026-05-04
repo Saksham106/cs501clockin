@@ -149,10 +149,13 @@ private fun PreviewSettings() {
             ),
             onNotificationsChanged = {},
             onLocationSuggestionsChanged = {},
+            onCalendarSuggestionsChanged = {},
             onNotificationQuickTagToggle = { _, _ -> },
             onHomeVisibleTagToggle = { _, _ -> },
             onAddCustomTag = { _, _ -> },
             onDeleteCustomTag = {},
+            onAddCalendarTagRule = { _, _ -> },
+            onDeleteCalendarTagRule = { _, _ -> },
             onAddSavedLocation = { _, _, _ -> },
             onAddSavedLocationManual = { _, _, _, _, _ -> },
             onDeleteSavedLocation = {}

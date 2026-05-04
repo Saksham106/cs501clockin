@@ -1,6 +1,7 @@
 package com.example.cs501clockin.calendar
 
 import android.Manifest
+import android.content.ContentUris
 import android.content.Context
 import android.provider.CalendarContract
 import androidx.core.content.ContextCompat
@@ -32,8 +33,8 @@ class CalendarEventRepository(
 
         val endMillis = startMillis + LOOKAHEAD_DAYS * 24L * 60L * 60L * 1000L
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
-            appendId(startMillis)
-            appendId(endMillis)
+            ContentUris.appendId(this, startMillis)
+            ContentUris.appendId(this, endMillis)
         }.build()
 
         val projection = arrayOf(
