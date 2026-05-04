@@ -264,6 +264,22 @@ private fun ClockInRoot() {
                     )
                 )
                 val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+                var pendingCalendarEnable by remember { mutableStateOf(false) }
+
+                val requestCalendarPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    if (pendingCalendarEnable) {
+                        if (granted) {
+                            settingsViewModel.setCalendarSuggestionsEnabled(true)
+                        } else {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Calendar permission denied.")
+                            }
+                        }
+                    }
+                    pendingCalendarEnable = false
+                }
 
                 LaunchedEffect(Unit) {
                     settingsViewModel.events.collect { message ->
@@ -275,10 +291,28 @@ private fun ClockInRoot() {
                     state = settingsState,
                     onNotificationsChanged = settingsViewModel::setNotificationsEnabled,
                     onLocationSuggestionsChanged = settingsViewModel::setLocationSuggestionsEnabled,
+                    onCalendarSuggestionsChanged = { enabled ->
+                        if (!enabled) {
+                            settingsViewModel.setCalendarSuggestionsEnabled(false)
+                            return@SettingsScreen
+                        }
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_CALENDAR
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasPermission) {
+                            settingsViewModel.setCalendarSuggestionsEnabled(true)
+                        } else {
+                            pendingCalendarEnable = true
+                            requestCalendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                        }
+                    },
                     onNotificationQuickTagToggle = settingsViewModel::toggleNotificationQuickTag,
                     onHomeVisibleTagToggle = settingsViewModel::toggleHomeVisibleTag,
                     onAddCustomTag = settingsViewModel::addCustomTag,
                     onDeleteCustomTag = settingsViewModel::deleteCustomTag,
+                    onAddCalendarTagRule = settingsViewModel::addCalendarTagRule,
+                    onDeleteCalendarTagRule = settingsViewModel::deleteCalendarTagRule,
                     onAddSavedLocation = settingsViewModel::addSavedLocationFromCurrent,
                     onAddSavedLocationManual = settingsViewModel::addSavedLocationManual,
                     onDeleteSavedLocation = settingsViewModel::deleteSavedLocation

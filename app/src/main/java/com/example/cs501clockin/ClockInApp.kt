@@ -9,6 +9,8 @@ import com.example.cs501clockin.data.repo.UserPreferencesRepository
 import com.example.cs501clockin.data.state.ActiveSessionStore
 import com.example.cs501clockin.location.LocationRepository
 import com.example.cs501clockin.data.repo.homeScreenTagChips
+import com.example.cs501clockin.calendar.CalendarEventRepository
+import com.example.cs501clockin.calendar.CalendarSuggestionScheduler
 import com.example.cs501clockin.notification.SessionTrackingService
 import com.example.cs501clockin.widget.TagSwitchWidgetProvider
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class ClockInApp : Application() {
@@ -28,6 +31,10 @@ class ClockInApp : Application() {
     lateinit var activeSessionStore: ActiveSessionStore
         private set
     lateinit var locationRepository: LocationRepository
+        private set
+    lateinit var calendarEventRepository: CalendarEventRepository
+        private set
+    lateinit var calendarSuggestionScheduler: CalendarSuggestionScheduler
         private set
 
     private val applicationJob = SupervisorJob()
@@ -48,6 +55,8 @@ class ClockInApp : Application() {
         userPreferencesRepository = UserPreferencesRepository(applicationContext)
         activeSessionStore = ActiveSessionStore(sessionRepository)
         locationRepository = LocationRepository(applicationContext)
+        calendarEventRepository = CalendarEventRepository(applicationContext)
+        calendarSuggestionScheduler = CalendarSuggestionScheduler(applicationContext, calendarEventRepository)
 
         applicationScope.launch {
             combine(
@@ -76,6 +85,19 @@ class ClockInApp : Application() {
                 .distinctUntilChanged()
                 .collect {
                     TagSwitchWidgetProvider.requestUpdateAll(this@ClockInApp)
+                }
+        }
+
+        applicationScope.launch {
+            userPreferencesRepository.data
+                .map { prefs -> prefs.calendarSuggestionsEnabled to prefs.calendarTagRules }
+                .distinctUntilChanged()
+                .collect { (enabled, rules) ->
+                    if (!enabled || rules.isEmpty()) {
+                        calendarSuggestionScheduler.cancel()
+                    } else {
+                        calendarSuggestionScheduler.scheduleNext(rules)
+                    }
                 }
         }
     }

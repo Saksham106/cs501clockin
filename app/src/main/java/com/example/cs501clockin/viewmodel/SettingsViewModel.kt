@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.cs501clockin.data.repo.SavedLocationRepository
 import com.example.cs501clockin.data.repo.UserPreferencesRepository
+import com.example.cs501clockin.data.repo.CalendarTagRule
 import com.example.cs501clockin.ui.util.PastelTagColors
 import com.example.cs501clockin.location.LocationRepository
 import com.example.cs501clockin.location.LocationResult
@@ -24,10 +25,12 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val notificationsEnabled: Boolean = true,
     val locationSuggestionsEnabled: Boolean = true,
+    val calendarSuggestionsEnabled: Boolean = false,
     val allTags: List<String> = emptyList(),
     val homeVisibleTags: Set<String> = emptySet(),
     val notificationQuickTags: Set<String> = emptySet(),
     val customTagColors: Map<String, Int> = emptyMap(),
+    val calendarTagRules: List<CalendarTagRule> = emptyList(),
     val savedLocations: List<SavedLocation> = emptyList()
 )
 
@@ -48,10 +51,12 @@ class SettingsViewModel(
         SettingsUiState(
             notificationsEnabled = prefs.notificationsEnabled,
             locationSuggestionsEnabled = prefs.locationSuggestionsEnabled,
+            calendarSuggestionsEnabled = prefs.calendarSuggestionsEnabled,
             allTags = prefs.allTags,
             homeVisibleTags = prefs.homeVisibleTags,
             notificationQuickTags = prefs.notificationQuickTags,
             customTagColors = prefs.customTagColors,
+            calendarTagRules = prefs.calendarTagRules,
             savedLocations = saved
         )
     }.stateIn(
@@ -69,6 +74,12 @@ class SettingsViewModel(
     fun setLocationSuggestionsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.setLocationSuggestionsEnabled(enabled)
+        }
+    }
+
+    fun setCalendarSuggestionsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferencesRepository.setCalendarSuggestionsEnabled(enabled)
         }
     }
 
@@ -127,6 +138,25 @@ class SettingsViewModel(
             userPreferencesRepository.deleteCustomTag(tag)
             TagSwitchWidgetProvider.requestUpdateAll(getApplication())
             _events.emit("Deleted tag.")
+        }
+    }
+
+    fun addCalendarTagRule(keyword: String, tag: String) {
+        val cleaned = keyword.trim()
+        if (cleaned.isBlank()) {
+            viewModelScope.launch { _events.emit("Please enter a keyword.") }
+            return
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.addCalendarTagRule(cleaned, tag)
+            _events.emit("Added calendar rule.")
+        }
+    }
+
+    fun deleteCalendarTagRule(keyword: String, tag: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.deleteCalendarTagRule(keyword, tag)
+            _events.emit("Deleted calendar rule.")
         }
     }
 

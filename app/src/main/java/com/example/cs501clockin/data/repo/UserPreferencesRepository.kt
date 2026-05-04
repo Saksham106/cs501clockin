@@ -18,6 +18,7 @@ private const val MAX_NOTIFICATION_QUICK_TAGS = 3
 data class UserPreferences(
     val notificationsEnabled: Boolean = true,
     val locationSuggestionsEnabled: Boolean = true,
+    val calendarSuggestionsEnabled: Boolean = false,
     /** User-created tags (in addition to [SessionTags.defaults]). */
     val customTags: Set<String> = emptySet(),
     /** Tags shown on Home. */
@@ -32,11 +33,18 @@ data class UserPreferences(
     val onboardingTipDashboardSeen: Boolean = false,
     val onboardingTipSettingsSeen: Boolean = false,
     /** ARGB for user-created tags only (built-in tags use [com.example.cs501clockin.ui.util.TagPalette]). */
-    val customTagColors: Map<String, Int> = emptyMap()
+    val customTagColors: Map<String, Int> = emptyMap(),
+    /** Keyword-based calendar rules, used to map event titles to tags. */
+    val calendarTagRules: List<CalendarTagRule> = emptyList()
 ) {
     val allTags: List<String>
         get() = (SessionTags.defaults + customTags.sorted()).distinct()
 }
+
+data class CalendarTagRule(
+    val keyword: String,
+    val tag: String
+)
 
 /**
  * Same ordered tag list as [com.example.cs501clockin.viewmodel.HomeViewModel] chips (home visible tags).
@@ -53,9 +61,11 @@ private val Context.userPreferencesDataStore: DataStore<Preferences> by preferen
 
 private val KEY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
 private val KEY_LOCATION_SUGGESTIONS_ENABLED = booleanPreferencesKey("location_suggestions_enabled")
+private val KEY_CALENDAR_SUGGESTIONS_ENABLED = booleanPreferencesKey("calendar_suggestions_enabled")
 private val KEY_NOTIFICATION_QUICK_TAGS = stringSetPreferencesKey("notification_quick_tags")
 private val KEY_CUSTOM_TAGS = stringSetPreferencesKey("custom_tags")
 private val KEY_HOME_VISIBLE_TAGS = stringSetPreferencesKey("home_visible_tags")
+private val KEY_CALENDAR_TAG_RULES = stringSetPreferencesKey("calendar_tag_rules")
 
 private val KEY_ONBOARDING_WELCOME_COMPLETED = booleanPreferencesKey("onboarding_welcome_completed")
 private val KEY_ONBOARDING_TIP_HOME_SEEN = booleanPreferencesKey("onboarding_tip_home_seen")
@@ -133,6 +143,27 @@ private fun normalizeNotificationQuickTags(tags: Set<String>, allTags: List<Stri
     return allTags.filter { it in base }.take(MAX_NOTIFICATION_QUICK_TAGS).toSet()
 }
 
+private fun parseCalendarTagRules(raw: Set<String>?, allTags: Set<String>): List<CalendarTagRule> {
+    if (raw.isNullOrEmpty()) return emptyList()
+    return raw.mapNotNull { entry ->
+        val parts = entry.split("|", limit = 2)
+        if (parts.size != 2) return@mapNotNull null
+        val keyword = parts[0].trim().lowercase()
+        val tag = parts[1].trim()
+        if (keyword.isBlank() || tag.isBlank() || tag !in allTags) return@mapNotNull null
+        CalendarTagRule(keyword = keyword, tag = tag)
+    }
+        .distinctBy { it.keyword to it.tag }
+        .sortedBy { it.keyword }
+}
+
+private fun serializeCalendarTagRules(rules: List<CalendarTagRule>): Set<String> {
+    return rules
+        .sortedWith(compareBy<CalendarTagRule> { it.keyword }.thenBy { it.tag })
+        .map { "${it.keyword}|${it.tag}" }
+        .toSet()
+}
+
 class UserPreferencesRepository(
     private val appContext: Context
 ) {
@@ -144,10 +175,12 @@ class UserPreferencesRepository(
         val homeVisible = normalizeHomeVisibleTags(prefs[KEY_HOME_VISIBLE_TAGS], allSet)
         val quickTags = normalizeNotificationQuickTagsFromRaw(prefs[KEY_NOTIFICATION_QUICK_TAGS], allTags)
         val customTagColors = parseCustomTagColorsJson(prefs[KEY_CUSTOM_TAG_COLORS], customTags)
+        val calendarRules = parseCalendarTagRules(prefs[KEY_CALENDAR_TAG_RULES], allSet)
 
         UserPreferences(
             notificationsEnabled = prefs[KEY_NOTIFICATIONS_ENABLED] ?: true,
             locationSuggestionsEnabled = prefs[KEY_LOCATION_SUGGESTIONS_ENABLED] ?: true,
+            calendarSuggestionsEnabled = prefs[KEY_CALENDAR_SUGGESTIONS_ENABLED] ?: false,
             customTags = customTags,
             homeVisibleTags = homeVisible,
             notificationQuickTags = quickTags,
@@ -156,7 +189,8 @@ class UserPreferencesRepository(
             onboardingTipHistorySeen = prefs[KEY_ONBOARDING_TIP_HISTORY_SEEN] ?: false,
             onboardingTipDashboardSeen = prefs[KEY_ONBOARDING_TIP_DASHBOARD_SEEN] ?: false,
             onboardingTipSettingsSeen = prefs[KEY_ONBOARDING_TIP_SETTINGS_SEEN] ?: false,
-            customTagColors = customTagColors
+            customTagColors = customTagColors,
+            calendarTagRules = calendarRules
         )
     }
 
@@ -166,6 +200,10 @@ class UserPreferencesRepository(
 
     suspend fun setLocationSuggestionsEnabled(enabled: Boolean) {
         appContext.userPreferencesDataStore.edit { it[KEY_LOCATION_SUGGESTIONS_ENABLED] = enabled }
+    }
+
+    suspend fun setCalendarSuggestionsEnabled(enabled: Boolean) {
+        appContext.userPreferencesDataStore.edit { it[KEY_CALENDAR_SUGGESTIONS_ENABLED] = enabled }
     }
 
     suspend fun setNotificationQuickTags(tags: Set<String>) {
@@ -206,6 +244,43 @@ class UserPreferencesRepository(
                 prefs.remove(KEY_CUSTOM_TAG_COLORS)
             } else {
                 prefs[KEY_CUSTOM_TAG_COLORS] = serializeCustomTagColors(colorMap)
+            }
+            val nextRules = parseCalendarTagRules(prefs[KEY_CALENDAR_TAG_RULES], allSet)
+            if (nextRules.isEmpty()) {
+                prefs.remove(KEY_CALENDAR_TAG_RULES)
+            } else {
+                prefs[KEY_CALENDAR_TAG_RULES] = serializeCalendarTagRules(nextRules)
+            }
+        }
+    }
+
+    suspend fun addCalendarTagRule(keyword: String, tag: String) {
+        val cleanedKeyword = keyword.trim().lowercase()
+        val cleanedTag = tag.trim()
+        if (cleanedKeyword.isBlank() || cleanedTag.isBlank()) return
+        appContext.userPreferencesDataStore.edit { prefs ->
+            val custom = normalizeCustomTags(prefs[KEY_CUSTOM_TAGS])
+            val allTags = (SessionTags.defaults + custom.sorted()).distinct().toSet()
+            if (cleanedTag !in allTags) return@edit
+            val current = parseCalendarTagRules(prefs[KEY_CALENDAR_TAG_RULES], allTags)
+            val next = (current + CalendarTagRule(cleanedKeyword, cleanedTag))
+                .distinctBy { it.keyword to it.tag }
+            prefs[KEY_CALENDAR_TAG_RULES] = serializeCalendarTagRules(next)
+        }
+    }
+
+    suspend fun deleteCalendarTagRule(keyword: String, tag: String) {
+        val cleanedKeyword = keyword.trim().lowercase()
+        val cleanedTag = tag.trim()
+        appContext.userPreferencesDataStore.edit { prefs ->
+            val custom = normalizeCustomTags(prefs[KEY_CUSTOM_TAGS])
+            val allTags = (SessionTags.defaults + custom.sorted()).distinct().toSet()
+            val current = parseCalendarTagRules(prefs[KEY_CALENDAR_TAG_RULES], allTags)
+            val next = current.filterNot { it.keyword == cleanedKeyword && it.tag == cleanedTag }
+            if (next.isEmpty()) {
+                prefs.remove(KEY_CALENDAR_TAG_RULES)
+            } else {
+                prefs[KEY_CALENDAR_TAG_RULES] = serializeCalendarTagRules(next)
             }
         }
     }

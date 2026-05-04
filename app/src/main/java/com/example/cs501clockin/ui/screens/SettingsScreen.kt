@@ -59,10 +59,13 @@ fun SettingsScreen(
     state: SettingsUiState,
     onNotificationsChanged: (Boolean) -> Unit,
     onLocationSuggestionsChanged: (Boolean) -> Unit,
+    onCalendarSuggestionsChanged: (Boolean) -> Unit,
     onNotificationQuickTagToggle: (tag: String, selected: Boolean) -> Unit,
     onHomeVisibleTagToggle: (tag: String, visible: Boolean) -> Unit,
     onAddCustomTag: (String, Int) -> Unit,
     onDeleteCustomTag: (String) -> Unit,
+    onAddCalendarTagRule: (keyword: String, tag: String) -> Unit,
+    onDeleteCalendarTagRule: (keyword: String, tag: String) -> Unit,
     onAddSavedLocation: (label: String, suggestedTag: String, radiusMeters: Int) -> Unit,
     onAddSavedLocationManual: (label: String, suggestedTag: String, radiusMeters: Int, latitude: Double, longitude: Double) -> Unit,
     onDeleteSavedLocation: (Long) -> Unit,
@@ -77,6 +80,9 @@ fun SettingsScreen(
     var newTagInput by remember { mutableStateOf("") }
     var selectedPastelArgb by remember { mutableIntStateOf(PastelTagColors.CHOICES_ARGB.first()) }
     var pickedLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var calendarKeywordInput by remember { mutableStateOf("") }
+    var calendarTagMenuExpanded by remember { mutableStateOf(false) }
+    var calendarSelectedTag by remember { mutableStateOf(state.allTags.firstOrNull() ?: "") }
 
     LazyColumn(
         modifier = modifier
@@ -153,6 +159,112 @@ fun SettingsScreen(
                             }
                             if (rowTags.size == 1) {
                                 Spacer(Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Calendar suggestions", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Suggest a tag when a calendar event starts. Add keyword rules to map event titles to tags.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Enable calendar suggestions")
+                        Switch(
+                            checked = state.calendarSuggestionsEnabled,
+                            onCheckedChange = onCalendarSuggestionsChanged
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                    Text("Keyword rules", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Example: keyword \"gym\" → Fitness tag.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = calendarKeywordInput,
+                        onValueChange = { calendarKeywordInput = it },
+                        label = { Text("Keyword") },
+                        singleLine = true,
+                        enabled = state.calendarSuggestionsEnabled,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenuBox(
+                        expanded = calendarTagMenuExpanded,
+                        onExpandedChange = { calendarTagMenuExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = calendarSelectedTag,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Tag") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = calendarTagMenuExpanded) },
+                            enabled = state.calendarSuggestionsEnabled,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = calendarTagMenuExpanded,
+                            onDismissRequest = { calendarTagMenuExpanded = false }
+                        ) {
+                            state.allTags.forEach { tag ->
+                                DropdownMenuItem(
+                                    text = { Text(tag) },
+                                    onClick = {
+                                        calendarSelectedTag = tag
+                                        calendarTagMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(
+                            enabled = state.calendarSuggestionsEnabled && calendarSelectedTag.isNotBlank(),
+                            onClick = {
+                                onAddCalendarTagRule(calendarKeywordInput, calendarSelectedTag)
+                                calendarKeywordInput = ""
+                            }
+                        ) {
+                            Text("Add rule")
+                        }
+                    }
+
+                    if (state.calendarTagRules.isEmpty()) {
+                        Text("No calendar rules yet.", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        state.calendarTagRules.forEach { rule ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("${rule.keyword} → ${rule.tag}")
+                                TextButton(onClick = { onDeleteCalendarTagRule(rule.keyword, rule.tag) }) {
+                                    Text("Delete")
+                                }
                             }
                         }
                     }
