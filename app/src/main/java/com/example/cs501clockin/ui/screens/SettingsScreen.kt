@@ -67,6 +67,7 @@ fun SettingsScreen(
     onAddCalendarTagRule: (keyword: String, tag: String) -> Unit,
     onDeleteCalendarTagRule: (keyword: String, tag: String) -> Unit,
     onSeedSampleData: () -> Unit,
+    onResetOnboarding: () -> Unit,
     onAddSavedLocation: (label: String, suggestedTag: String, radiusMeters: Int) -> Unit,
     onAddSavedLocationManual: (label: String, suggestedTag: String, radiusMeters: Int, latitude: Double, longitude: Double) -> Unit,
     onDeleteSavedLocation: (Long) -> Unit,
@@ -279,16 +280,21 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Sample data", style = MaterialTheme.typography.titleMedium)
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Developers", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Populate the last 7 days with random sessions for testing the dashboard.",
+                        "Utilities for testing and demos.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onSeedSampleData) {
                             Text("Seed last 7 days")
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = onResetOnboarding) {
+                            Text("Restart onboarding")
                         }
                     }
                 }

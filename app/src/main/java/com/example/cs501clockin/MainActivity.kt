@@ -322,6 +322,13 @@ private fun ClockInRoot() {
                     onAddCalendarTagRule = settingsViewModel::addCalendarTagRule,
                     onDeleteCalendarTagRule = settingsViewModel::deleteCalendarTagRule,
                     onSeedSampleData = settingsViewModel::seedLast7Days,
+                    onResetOnboarding = {
+                        settingsViewModel.resetOnboarding()
+                        navController.navigate(Routes.Home) {
+                            popUpTo(Routes.Home) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                     onAddSavedLocation = settingsViewModel::addSavedLocationFromCurrent,
                     onAddSavedLocationManual = settingsViewModel::addSavedLocationManual,
                     onDeleteSavedLocation = settingsViewModel::deleteSavedLocation

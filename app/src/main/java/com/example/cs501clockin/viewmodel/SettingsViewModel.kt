@@ -272,6 +272,17 @@ class SettingsViewModel(
         }
     }
 
+    fun resetOnboarding() {
+        viewModelScope.launch {
+            userPreferencesRepository.setOnboardingWelcomeCompleted(false)
+            userPreferencesRepository.setOnboardingTipHomeSeen(false)
+            userPreferencesRepository.setOnboardingTipHistorySeen(false)
+            userPreferencesRepository.setOnboardingTipDashboardSeen(false)
+            userPreferencesRepository.setOnboardingTipSettingsSeen(false)
+            _events.emit("Onboarding reset. Return to Home to start it again.")
+        }
+    }
+
     private fun startOfDayMillis(nowMillis: Long): Long {
         val cal = Calendar.getInstance().apply {
             timeInMillis = nowMillis

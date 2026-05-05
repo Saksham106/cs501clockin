@@ -157,6 +157,7 @@ private fun PreviewSettings() {
             onAddCalendarTagRule = { _, _ -> },
             onDeleteCalendarTagRule = { _, _ -> },
             onSeedSampleData = {},
+            onResetOnboarding = {},
             onAddSavedLocation = { _, _, _ -> },
             onAddSavedLocationManual = { _, _, _, _, _ -> },
             onDeleteSavedLocation = {}
