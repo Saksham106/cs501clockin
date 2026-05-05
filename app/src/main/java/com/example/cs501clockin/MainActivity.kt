@@ -123,6 +123,7 @@ private fun ClockInRoot() {
             app.savedLocationRepository,
             app.userPreferencesRepository,
             app.activeSessionStore,
+            app.calendarEventRepository,
             locationViewModel.uiState
         )
     )
@@ -147,8 +148,8 @@ private fun ClockInRoot() {
         }
     }
 
-    LaunchedEffect(suggestionsUiState.suggestion) {
-        val s = suggestionsUiState.suggestion ?: return@LaunchedEffect
+    LaunchedEffect(suggestionsUiState.locationSuggestion) {
+        val s = suggestionsUiState.locationSuggestion ?: return@LaunchedEffect
         if (s.savedLocationId == lastNotifiedSuggestionId) return@LaunchedEffect
         lastNotifiedSuggestionId = s.savedLocationId
         LocationSuggestionNotifier.notify(
@@ -228,12 +229,18 @@ private fun ClockInRoot() {
                     onTagSelected = homeViewModel::onTagSelected,
                     onStart = homeViewModel::startSession,
                     onEnd = { homeViewModel.endSession() },
-                    locationSuggestion = suggestionsUiState.suggestion,
+                    locationSuggestion = suggestionsUiState.locationSuggestion,
                     onAcceptLocationSuggestion = { tag ->
                         homeViewModel.onTagSelected(tag)
                         homeViewModel.startSession()
                     },
-                    onDismissLocationSuggestion = { suggestionsViewModel.dismissCurrentSuggestion() }
+                    onDismissLocationSuggestion = { suggestionsViewModel.dismissCurrentSuggestion() },
+                    calendarSuggestion = suggestionsUiState.calendarSuggestion,
+                    onAcceptCalendarSuggestion = { tag ->
+                        homeViewModel.onTagSelected(tag)
+                        homeViewModel.startSession()
+                    },
+                    onDismissCalendarSuggestion = { suggestionsViewModel.dismissCalendarSuggestion() }
                 )
             }
 

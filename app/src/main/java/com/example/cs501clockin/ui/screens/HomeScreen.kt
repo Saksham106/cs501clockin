@@ -31,6 +31,7 @@ import com.example.cs501clockin.model.durationMillis
 import com.example.cs501clockin.ui.util.TagPalette
 import com.example.cs501clockin.ui.util.formatClockTime
 import com.example.cs501clockin.ui.util.formatDurationMillis
+import com.example.cs501clockin.viewmodel.CalendarSuggestion
 import com.example.cs501clockin.viewmodel.LocationSuggestion
 
 @Composable
@@ -45,6 +46,9 @@ fun HomeScreen(
     locationSuggestion: LocationSuggestion? = null,
     onAcceptLocationSuggestion: ((String) -> Unit)? = null,
     onDismissLocationSuggestion: (() -> Unit)? = null,
+    calendarSuggestion: CalendarSuggestion? = null,
+    onAcceptCalendarSuggestion: ((String) -> Unit)? = null,
+    onDismissCalendarSuggestion: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val darkTheme = isSystemInDarkTheme()
@@ -88,6 +92,48 @@ fun HomeScreen(
                         }
                         OutlinedButton(
                             onClick = onDismissLocationSuggestion,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Dismiss")
+                        }
+                    }
+                }
+            }
+        }
+
+        if (calendarSuggestion != null && onAcceptCalendarSuggestion != null && onDismissCalendarSuggestion != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "Calendar: ${calendarSuggestion.title}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Switch to ${calendarSuggestion.suggestedTag}?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onAcceptCalendarSuggestion(calendarSuggestion.suggestedTag) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Accept")
+                        }
+                        OutlinedButton(
+                            onClick = onDismissCalendarSuggestion,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Dismiss")

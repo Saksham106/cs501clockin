@@ -6,6 +6,7 @@ import android.content.Context
 import android.provider.CalendarContract
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import android.util.Log
 import com.example.cs501clockin.data.repo.CalendarTagRule
 
 private const val LOOKAHEAD_DAYS = 7
@@ -28,8 +29,16 @@ class CalendarEventRepository(
     }
 
     fun findNextMatchingEvent(startMillis: Long, rules: List<CalendarTagRule>): CalendarEventSuggestion? {
-        if (!hasReadCalendarPermission()) return null
-        if (rules.isEmpty()) return null
+        if (!hasReadCalendarPermission()) {
+            Log.d(TAG, "READ_CALENDAR not granted; returning null.")
+            return null
+        }
+        if (rules.isEmpty()) {
+            Log.d(TAG, "No calendar rules; returning null.")
+            return null
+        }
+
+        Log.d(TAG, "Searching events from $startMillis with rules=${rules.joinToString { "${it.keyword}:${it.tag}" }}")
 
         val endMillis = startMillis + LOOKAHEAD_DAYS * 24L * 60L * 60L * 1000L
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
@@ -71,6 +80,8 @@ class CalendarEventRepository(
                 val eventId = cursor.getLong(idCol)
                 val begin = cursor.getLong(beginCol)
 
+                Log.d(TAG, "Matched eventId=$eventId title=\"$title\" begin=$begin tag=${matched.tag}")
+
                 return CalendarEventSuggestion(
                     eventId = eventId,
                     title = title,
@@ -79,6 +90,11 @@ class CalendarEventRepository(
                 )
             }
         }
+        Log.d(TAG, "No matching events in query window.")
         return null
+    }
+
+    private companion object {
+        const val TAG = "CalEventRepo"
     }
 }
