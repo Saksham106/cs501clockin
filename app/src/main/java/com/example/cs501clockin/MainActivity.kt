@@ -267,7 +267,8 @@ private fun ClockInRoot() {
                         context.applicationContext as Application,
                         app.userPreferencesRepository,
                         app.savedLocationRepository,
-                        app.locationRepository
+                        app.locationRepository,
+                        app.sessionRepository
                     )
                 )
                 val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
@@ -320,6 +321,7 @@ private fun ClockInRoot() {
                     onDeleteCustomTag = settingsViewModel::deleteCustomTag,
                     onAddCalendarTagRule = settingsViewModel::addCalendarTagRule,
                     onDeleteCalendarTagRule = settingsViewModel::deleteCalendarTagRule,
+                    onSeedSampleData = settingsViewModel::seedLast7Days,
                     onAddSavedLocation = settingsViewModel::addSavedLocationFromCurrent,
                     onAddSavedLocationManual = settingsViewModel::addSavedLocationManual,
                     onDeleteSavedLocation = settingsViewModel::deleteSavedLocation

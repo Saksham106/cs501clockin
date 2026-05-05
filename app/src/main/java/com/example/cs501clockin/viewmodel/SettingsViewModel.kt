@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.cs501clockin.data.repo.SessionRepository
 import com.example.cs501clockin.data.repo.SavedLocationRepository
 import com.example.cs501clockin.data.repo.UserPreferencesRepository
 import com.example.cs501clockin.data.repo.CalendarTagRule
@@ -12,6 +13,8 @@ import com.example.cs501clockin.ui.util.PastelTagColors
 import com.example.cs501clockin.location.LocationRepository
 import com.example.cs501clockin.location.LocationResult
 import com.example.cs501clockin.model.SavedLocation
+import com.example.cs501clockin.model.Session
+import com.example.cs501clockin.model.SessionTags
 import com.example.cs501clockin.widget.TagSwitchWidgetProvider
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +24,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import kotlin.random.Random
 
 data class SettingsUiState(
     val notificationsEnabled: Boolean = true,
@@ -38,7 +43,8 @@ class SettingsViewModel(
     application: Application,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val savedLocationRepository: SavedLocationRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val sessionRepository: SessionRepository
 ) : AndroidViewModel(application) {
 
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -226,13 +232,70 @@ class SettingsViewModel(
             }
         }
     }
+
+    fun seedLast7Days() {
+        viewModelScope.launch {
+            val prefs = userPreferencesRepository.data.first()
+            val allTags = prefs.allTags.filter { it != SessionTags.IDLE }
+            val tags = if (allTags.isEmpty()) SessionTags.defaults.filter { it != SessionTags.IDLE } else allTags
+            if (tags.isEmpty()) {
+                _events.emit("No tags available to seed.")
+                return@launch
+            }
+
+            val now = System.currentTimeMillis()
+            val startOfToday = startOfDayMillis(now)
+            val random = Random(42)
+
+            for (dayOffset in 0..6) {
+                val dayStart = startOfToday - dayOffset * DAY_MILLIS
+                val dayEnd = dayStart + DAY_MILLIS
+                var cursor = dayStart + 8 * HOUR_MILLIS
+                repeat(4) {
+                    val duration = random.nextLong(45, 150) * MINUTE_MILLIS
+                    val end = (cursor + duration).coerceAtMost(dayEnd - 30 * MINUTE_MILLIS)
+                    if (end <= cursor) return@repeat
+                    val tag = tags[random.nextInt(tags.size)]
+                    sessionRepository.upsert(
+                        Session(
+                            id = cursor,
+                            tag = tag,
+                            startTimeMillis = cursor,
+                            endTimeMillis = end
+                        )
+                    )
+                    cursor = end + random.nextLong(15, 60) * MINUTE_MILLIS
+                }
+            }
+
+            _events.emit("Seeded last 7 days with sample sessions.")
+        }
+    }
+
+    private fun startOfDayMillis(nowMillis: Long): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = nowMillis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return cal.timeInMillis
+    }
+
+    private companion object {
+        const val MINUTE_MILLIS = 60_000L
+        const val HOUR_MILLIS = 60 * MINUTE_MILLIS
+        const val DAY_MILLIS = 24 * HOUR_MILLIS
+    }
 }
 
 class SettingsViewModelFactory(
     private val application: Application,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val savedLocationRepository: SavedLocationRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val sessionRepository: SessionRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -240,7 +303,8 @@ class SettingsViewModelFactory(
             application,
             userPreferencesRepository,
             savedLocationRepository,
-            locationRepository
+            locationRepository,
+            sessionRepository
         ) as T
     }
 }
