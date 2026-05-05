@@ -11,7 +11,7 @@
     <string name="onboarding_skip">Skip</string>
 
     <string name="onboarding_tip_home_title">Home</string>
-    <string name="onboarding_tip_home_body">Pick a tag and tap Start. Use End to save and return to Idle.</string>
+    <string name="onboarding_tip_home_body">Calendar events are micro. Tags are macro.\nGroup moments into a tag, tap Start, and use End to save. 📌</string>
 
     <string name="onboarding_tip_history_title">History</string>
     <string name="onboarding_tip_history_body">Browse sessions by day. Tap one to edit or delete.</string>

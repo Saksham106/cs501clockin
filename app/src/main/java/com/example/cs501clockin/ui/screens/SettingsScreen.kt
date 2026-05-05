@@ -68,6 +68,7 @@ fun SettingsScreen(
     onDeleteCalendarTagRule: (keyword: String, tag: String) -> Unit,
     onSeedSampleData: () -> Unit,
     onResetOnboarding: () -> Unit,
+    showDeveloperTools: Boolean,
     onAddSavedLocation: (label: String, suggestedTag: String, radiusMeters: Int) -> Unit,
     onAddSavedLocationManual: (label: String, suggestedTag: String, radiusMeters: Int, latitude: Double, longitude: Double) -> Unit,
     onDeleteSavedLocation: (Long) -> Unit,
@@ -274,27 +275,29 @@ fun SettingsScreen(
             }
         }
 
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Developers", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Utilities for testing and demos.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onSeedSampleData) {
-                            Text("Seed last 7 days")
+        if (showDeveloperTools) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Developers", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Utilities for testing and demos.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = onSeedSampleData) {
+                                Text("Seed last 7 days")
+                            }
                         }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onResetOnboarding) {
-                            Text("Restart onboarding")
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = onResetOnboarding) {
+                                Text("Restart onboarding")
+                            }
                         }
                     }
                 }

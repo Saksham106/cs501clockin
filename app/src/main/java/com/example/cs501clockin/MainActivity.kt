@@ -43,7 +43,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cs501clockin.data.repo.UserPreferences
 import com.example.cs501clockin.ui.onboarding.TabOnboardingDialog
-import com.example.cs501clockin.ui.onboarding.WelcomeOnboardingDialog
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -60,6 +59,7 @@ import com.example.cs501clockin.ui.screens.HistoryScreen
 import com.example.cs501clockin.ui.screens.HomeScreen
 import com.example.cs501clockin.ui.screens.SettingsScreen
 import com.example.cs501clockin.ui.theme.Cs501clockinTheme
+import com.example.cs501clockin.BuildConfig
 import com.example.cs501clockin.viewmodel.EditSessionViewModel
 import com.example.cs501clockin.viewmodel.EditSessionViewModelFactory
 import com.example.cs501clockin.viewmodel.HistoryViewModel
@@ -329,6 +329,7 @@ private fun ClockInRoot() {
                             launchSingleTop = true
                         }
                     },
+                    showDeveloperTools = BuildConfig.DEBUG,
                     onAddSavedLocation = settingsViewModel::addSavedLocationFromCurrent,
                     onAddSavedLocationManual = settingsViewModel::addSavedLocationManual,
                     onDeleteSavedLocation = settingsViewModel::deleteSavedLocation
@@ -360,18 +361,7 @@ private fun ClockInRoot() {
         }
 
         when {
-            !prefs.onboardingWelcomeCompleted -> {
-                WelcomeOnboardingDialog(
-                    onDismiss = {
-                        scope.launch {
-                            app.userPreferencesRepository.setOnboardingWelcomeCompleted(true)
-                        }
-                    }
-                )
-            }
-
-            prefs.onboardingWelcomeCompleted &&
-                currentRoute == Routes.Home &&
+            currentRoute == Routes.Home &&
                 !prefs.onboardingTipHomeSeen -> {
                 TabOnboardingDialog(
                     route = Routes.Home,
@@ -383,8 +373,7 @@ private fun ClockInRoot() {
                 )
             }
 
-            prefs.onboardingWelcomeCompleted &&
-                currentRoute == Routes.History &&
+            currentRoute == Routes.History &&
                 !prefs.onboardingTipHistorySeen -> {
                 TabOnboardingDialog(
                     route = Routes.History,
@@ -396,8 +385,7 @@ private fun ClockInRoot() {
                 )
             }
 
-            prefs.onboardingWelcomeCompleted &&
-                currentRoute == Routes.Dashboard &&
+            currentRoute == Routes.Dashboard &&
                 !prefs.onboardingTipDashboardSeen -> {
                 TabOnboardingDialog(
                     route = Routes.Dashboard,
@@ -409,8 +397,7 @@ private fun ClockInRoot() {
                 )
             }
 
-            prefs.onboardingWelcomeCompleted &&
-                currentRoute == Routes.Settings &&
+            currentRoute == Routes.Settings &&
                 !prefs.onboardingTipSettingsSeen -> {
                 TabOnboardingDialog(
                     route = Routes.Settings,
